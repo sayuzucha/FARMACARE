@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Farmacare — Modelos & Endpoints</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F9F8F4; color: #111110; }
+
+  /* NAV */
+  nav { position: sticky; top: 0; z-index: 100; background: #fff; border-bottom: 1px solid #E8E6DF; display: flex; gap: 4px; padding: 0 24px; }
+  nav a { padding: 14px 16px; font-size: 13px; font-weight: 500; color: #5F5E5A; text-decoration: none; border-bottom: 2px solid transparent; transition: .15s; white-space: nowrap; }
+  nav a:hover, nav a.active { color: #1D9E75; border-bottom-color: #1D9E75; }
+
+  /* LAYOUT */
+  .page { max-width: 1100px; margin: 0 auto; padding: 32px 24px 80px; }
+  .section { margin-bottom: 56px; }
+  h1 { font-size: 26px; font-weight: 700; color: #111110; margin-bottom: 6px; }
+  .subtitle { font-size: 14px; color: #888780; margin-bottom: 40px; }
+  h2 { font-size: 18px; font-weight: 700; color: #111110; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  h2 .badge { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; background: #E1F5EE; color: #0F6E56; }
+  h3 { font-size: 14px; font-weight: 600; color: #111110; margin-bottom: 10px; }
+
+  /* ER DIAGRAM */
+  .er-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+  .entity-card { background: #fff; border: 1px solid #E8E6DF; border-radius: 12px; overflow: hidden; }
+  .entity-header { padding: 12px 16px; display: flex; align-items: center; gap: 10px; }
+  .entity-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .entity-name { font-size: 14px; font-weight: 700; color: #111110; }
+  .entity-desc { font-size: 11px; color: #888780; }
+  .entity-fields { border-top: 1px solid #F1EFE8; }
+  .field-row { display: flex; align-items: baseline; gap: 8px; padding: 7px 16px; border-bottom: 1px solid #F1EFE8; }
+  .field-row:last-child { border-bottom: none; }
+  .field-name { font-size: 12px; font-weight: 500; color: #111110; min-width: 140px; }
+  .field-type { font-size: 11px; color: #888780; font-family: 'SF Mono', 'Fira Code', monospace; }
+  .field-pk { font-size: 9px; font-weight: 700; background: #E6F1FB; color: #0C447C; padding: 1px 5px; border-radius: 4px; flex-shrink: 0; }
+  .field-fk { font-size: 9px; font-weight: 700; background: #FAEEDAf0; color: #633806; padding: 1px 5px; border-radius: 4px; flex-shrink: 0; }
+  .field-opt { font-size: 9px; color: #B4B2A9; flex-shrink: 0; }
+
+  /* RELATIONS */
+  .relations-section { margin-top: 32px; }
+  .rel-table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #E8E6DF; border-radius: 12px; overflow: hidden; }
+  .rel-table th { padding: 10px 16px; text-align: left; font-size: 11px; font-weight: 600; color: #888780; text-transform: uppercase; letter-spacing: .4px; background: #F9F8F4; border-bottom: 1px solid #E8E6DF; }
+  .rel-table td { padding: 10px 16px; font-size: 13px; color: #111110; border-bottom: 1px solid #F1EFE8; }
+  .rel-table tr:last-child td { border-bottom: none; }
+  .rel-type { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+  .one-many { background: #E1F5EE; color: #0F6E56; }
+  .many-many { background: #E6F1FB; color: #0C447C; }
+
+  /* ENDPOINTS */
+  .endpoints-list { display: flex; flex-direction: column; gap: 12px; }
+  .endpoint-card { background: #fff; border: 1px solid #E8E6DF; border-radius: 12px; overflow: hidden; }
+  .endpoint-header { padding: 14px 18px; display: flex; align-items: center; gap: 12px; cursor: pointer; user-select: none; }
+  .endpoint-header:hover { background: #F9F8F4; }
+  .method { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; font-family: monospace; min-width: 48px; text-align: center; }
+  .GET { background: #E1F5EE; color: #0F6E56; }
+  .POST { background: #E6F1FB; color: #0C447C; }
+  .PUT { background: #FAEEDAf0; color: #633806; }
+  .PATCH { background: #EEEDFEf0; color: #3C3489; }
+  .DELETE { background: #FCEBEBf0; color: #791F1F; }
+  .endpoint-path { font-size: 13px; font-weight: 500; color: #111110; font-family: 'SF Mono', 'Fira Code', monospace; flex: 1; }
+  .endpoint-desc { font-size: 12px; color: #888780; }
+  .chevron { margin-left: auto; color: #B4B2A9; transition: .2s; font-size: 12px; }
+  .endpoint-body { padding: 0 18px 16px; display: none; }
+  .endpoint-body.open { display: block; }
+  .json-tabs { display: flex; gap: 4px; margin-bottom: 10px; border-bottom: 1px solid #F1EFE8; }
+  .json-tab { font-size: 12px; font-weight: 500; color: #888780; padding: 6px 12px; cursor: pointer; border-bottom: 2px solid transparent; }
+  .json-tab.active { color: #1D9E75; border-bottom-color: #1D9E75; }
+  .json-panel { display: none; }
+  .json-panel.active { display: block; }
+  pre { background: #F1EFE8; border-radius: 8px; padding: 14px; font-size: 12px; font-family: 'SF Mono', 'Fira Code', monospace; overflow-x: auto; line-height: 1.6; color: #111110; }
+  .key { color: #0C447C; }
+  .str { color: #27500A; }
+  .num { color: #633806; }
+  .bool { color: #3C3489; }
+  .null-val { color: #888780; }
+  .comment { color: #B4B2A9; font-style: italic; }
+
+  /* GROUP HEADERS */
+  .group-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: #888780; margin: 28px 0 10px; display: flex; align-items: center; gap: 8px; }
+  .group-label::after { content: ''; flex: 1; height: 1px; background: #E8E6DF; }
+
+  /* COLORS per entity */
+  .c-user { background: #E6F1FB; }
+  .c-patient { background: #E1F5EE; }
+  .c-med { background: #EEEDFEf0; }
+  .c-dose { background: #FAEEDAf0; }
+  .c-caregiver { background: #FCEBEBf0; }
+  .c-report { background: #EAF3DE; }
+  .c-notif { background: #F1EFE8; }
+  .c-message { background: #E6F1FB; }
+  .c-appt { background: #FAEEDAf0; }
+  .c-invite { background: #FBEAf0; }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#er" class="active" onclick="setActive(this)">Entidades</a>
+  <a href="#relations" onclick="setActive(this)">Relaciones</a>
+  <a href="#auth-ep" onclick="setActive(this)">Auth</a>
+  <a href="#patients-ep" onclick="setActive(this)">Pacientes</a>
+  <a href="#meds-ep" onclick="setActive(this)">Medicamentos</a>
+  <a href="#doses-ep" onclick="setActive(this)">Tomas</a>
+  <a href="#caregivers-ep" onclick="setActive(this)">Cuidadores</a>
+  <a href="#reports-ep" onclick="setActive(this)">Reportes</a>
+  <a href="#notif-ep" onclick="setActive(this)">Notificaciones</a>
+  <a href="#messages-ep" onclick="setActive(this)">Mensajes</a>
+  <a href="#appt-ep" onclick="setActive(this)">Citas</a>
+</nav>
+
+<div class="page">
+  <h1>Farmacare — Documentación técnica</h1>
+  <p class="subtitle">Modelos entidad–relación y endpoints REST · Base URL: <code>http://10.0.2.2:3000/api/v1</code></p>
+
+  <!-- ═══════════════ ENTIDADES ═══════════════ -->
+  <div class="section" id="er">
+    <h2>Entidades <span class="badge">14 modelos</span></h2>
+    <div class="er-grid">
+
+      <!-- User -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-user">👤</div>
+          <div><div class="entity-name">AuthUser</div><div class="entity-desc">Usuario / cuidador</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">nombre</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">email</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">telefono</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">fotoUrl</span><span class="field-type">String?</span></div>
+        </div>
+      </div>
+
+      <!-- Patient -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-patient">🧓</div>
+          <div><div class="entity-name">Patient</div><div class="entity-desc">Paciente adulto mayor</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">nombre</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">fechaNacimiento</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-name">sexo</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">pesoKg</span><span class="field-type">double?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">tipoSangre</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">telefonoEmergencia</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-name">enfermedades</span><span class="field-type">List&lt;String&gt;</span></div>
+          <div class="field-row"><span class="field-name">alergiasMedicamentos</span><span class="field-type">List&lt;String&gt;</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">otrasAlergias</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">medicoNombre</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">medicoEspecialidad</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">medicoTelefono</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">notas</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">rol</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-name">totalMedicamentos</span><span class="field-type">int</span></div>
+          <div class="field-row" style="background:#F9F8F4"><span class="field-opt">calc</span><span class="field-name">edad</span><span class="field-type">int? (getter)</span></div>
+        </div>
+      </div>
+
+      <!-- Medication -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-med">💊</div>
+          <div><div class="entity-name">Medication</div><div class="entity-desc">Medicamento del paciente</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-fk">FK</span><span class="field-name">patientId</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">nombre</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">dosis</span><span class="field-type">double</span></div>
+          <div class="field-row"><span class="field-name">unidad</span><span class="field-type">mg | ml | g | UI | gotas</span></div>
+          <div class="field-row"><span class="field-name">viaAdministracion</span><span class="field-type">oral | inyectable | tópico | inhalado</span></div>
+          <div class="field-row"><span class="field-name">horarios</span><span class="field-type">List&lt;String&gt; ["HH:mm"]</span></div>
+          <div class="field-row"><span class="field-name">cantidad</span><span class="field-type">int (pastillas/dosis)</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">frecuenciaHoras</span><span class="field-type">int? (4|6|8|12|24)</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">duracionDias</span><span class="field-type">int?</span></div>
+          <div class="field-row"><span class="field-name">diasSemana</span><span class="field-type">List&lt;int&gt; [1=L…7=D]</span></div>
+          <div class="field-row"><span class="field-name">fechaInicio</span><span class="field-type">String (YYYY-MM-DD)</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">fechaFin</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">indicaciones</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-name">activo</span><span class="field-type">bool</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">motivoSuspension</span><span class="field-type">String?</span></div>
+        </div>
+      </div>
+
+      <!-- DoseSummary -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-dose">📋</div>
+          <div><div class="entity-name">DoseSummary</div><div class="entity-desc">Resumen de tomas del día</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-name">fecha</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">total</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">tomadas</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">pendientes</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">schedule</span><span class="field-type">List&lt;DoseSlot&gt;</span></div>
+          <div class="field-row" style="background:#F9F8F4"><span class="field-opt">calc</span><span class="field-name">porcentaje</span><span class="field-type">double (getter)</span></div>
+        </div>
+      </div>
+
+      <!-- DoseSlot -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-dose">⏰</div>
+          <div><div class="entity-name">DoseSlot</div><div class="entity-desc">Toma individual programada</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-fk">FK</span><span class="field-name">medicationId</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">medicationNombre</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">dosis</span><span class="field-type">double</span></div>
+          <div class="field-row"><span class="field-name">unidad</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">indicaciones</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-name">horaProgramada</span><span class="field-type">String (HH:mm)</span></div>
+          <div class="field-row"><span class="field-name">fecha</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">estado</span><span class="field-type">pendiente | tomado | omitido</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">dose</span><span class="field-type">Map? (registro real)</span></div>
+        </div>
+      </div>
+
+      <!-- Caregiver -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-caregiver">🤝</div>
+          <div><div class="entity-name">Caregiver</div><div class="entity-desc">Relación usuario–paciente</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-fk">FK</span><span class="field-name">patientId</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-fk">FK</span><span class="field-name">userId</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">rol</span><span class="field-type">admin | cuidador</span></div>
+          <div class="field-row"><span class="field-name">user</span><span class="field-type">CaregiverUser</span></div>
+        </div>
+      </div>
+
+      <!-- CaregiverUser -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-caregiver">👥</div>
+          <div><div class="entity-name">CaregiverUser</div><div class="entity-desc">Datos del cuidador</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">nombre</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">email</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">fotoUrl</span><span class="field-type">String?</span></div>
+        </div>
+      </div>
+
+      <!-- Invite -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-invite">✉️</div>
+          <div><div class="entity-name">Invite</div><div class="entity-desc">Invitación pendiente</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">email</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">rol</span><span class="field-type">admin | cuidador</span></div>
+          <div class="field-row"><span class="field-name">estado</span><span class="field-type">pendiente | aceptada | expirada</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">expiresAt</span><span class="field-type">String?</span></div>
+        </div>
+      </div>
+
+      <!-- ComplianceReport -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-report">📊</div>
+          <div><div class="entity-name">ComplianceReport</div><div class="entity-desc">Reporte de cumplimiento</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-name">porcentaje</span><span class="field-type">double (0–100)</span></div>
+          <div class="field-row"><span class="field-name">total</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">tomadas</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">omitidas</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">desde</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">hasta</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">desglose</span><span class="field-type">List&lt;MedCompliance&gt;</span></div>
+        </div>
+      </div>
+
+      <!-- MedCompliance -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-report">📈</div>
+          <div><div class="entity-name">MedCompliance</div><div class="entity-desc">Cumplimiento por medicamento</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-name">nombre</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">total</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">tomadas</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">omitidas</span><span class="field-type">int</span></div>
+          <div class="field-row"><span class="field-name">porcentaje</span><span class="field-type">double</span></div>
+        </div>
+      </div>
+
+      <!-- ActivityItem -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-report">🕐</div>
+          <div><div class="entity-name">ActivityItem</div><div class="entity-desc">Registro de actividad</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-name">estado</span><span class="field-type">tomado | omitido | pendiente</span></div>
+          <div class="field-row"><span class="field-name">fecha</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">horaProgramada</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">registradoPor</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">medicamentoNombre</span><span class="field-type">String?</span></div>
+        </div>
+      </div>
+
+      <!-- AppNotification -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-notif">🔔</div>
+          <div><div class="entity-name">AppNotification</div><div class="entity-desc">Notificación push</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">titulo</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">cuerpo</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">tipo</span><span class="field-type">recordatorio | toma_registrada | invitacion | sistema</span></div>
+          <div class="field-row"><span class="field-name">leida</span><span class="field-type">bool</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">patientId</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+        </div>
+      </div>
+
+      <!-- PatientMessage -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-message">💬</div>
+          <div><div class="entity-name">PatientMessage</div><div class="entity-desc">Mensaje entre cuidadores</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-fk">FK</span><span class="field-name">patientId</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-fk">FK</span><span class="field-name">userId</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">userName</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">userFotoUrl</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-name">contenido</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">createdAt</span><span class="field-type">DateTime</span></div>
+        </div>
+      </div>
+
+      <!-- DoctorAppointment -->
+      <div class="entity-card">
+        <div class="entity-header">
+          <div class="entity-icon c-appt">🏥</div>
+          <div><div class="entity-name">DoctorAppointment</div><div class="entity-desc">Cita médica del paciente</div></div>
+        </div>
+        <div class="entity-fields">
+          <div class="field-row"><span class="field-pk">PK</span><span class="field-name">id</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-fk">FK</span><span class="field-name">patientId</span><span class="field-type">String</span></div>
+          <div class="field-row"><span class="field-name">fecha</span><span class="field-type">String (YYYY-MM-DD)</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">hora</span><span class="field-type">String? (HH:mm)</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">motivo</span><span class="field-type">String?</span></div>
+          <div class="field-row"><span class="field-opt">opt</span><span class="field-name">medico</span><span class="field-type">String?</span></div>
+        </div>
+      </div>
+
+    </div><!-- /er-grid -->
+  </div>
+
+  <!-- ═══════════════ RELACIONES ═══════════════ -->
+  <div class="section" id="relations">
+    <h2>Relaciones entre entidades</h2>
+    <table class="rel-table">
+      <thead><tr><th>Entidad A</th><th>Relación</th><th>Entidad B</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <tr><td>AuthUser</td><td><span class="rel-type many-many">N:M</span></td><td>Patient</td><td>Un usuario puede cuidar muchos pacientes; un paciente puede tener muchos cuidadores (tabla Caregiver)</td></tr>
+        <tr><td>Patient</td><td><span class="rel-type one-many">1:N</span></td><td>Medication</td><td>Un paciente tiene muchos medicamentos</td></tr>
+        <tr><td>Medication</td><td><span class="rel-type one-many">1:N</span></td><td>DoseSlot</td><td>Un medicamento genera múltiples tomas en el schedule diario</td></tr>
+        <tr><td>Patient</td><td><span class="rel-type one-many">1:N</span></td><td>DoseSummary</td><td>Un paciente tiene un resumen de tomas por día</td></tr>
+        <tr><td>Patient</td><td><span class="rel-type one-many">1:N</span></td><td>Invite</td><td>Un paciente puede tener múltiples invitaciones pendientes</td></tr>
+        <tr><td>Patient</td><td><span class="rel-type one-many">1:N</span></td><td>PatientMessage</td><td>Los cuidadores dejan mensajes ligados al paciente</td></tr>
+        <tr><td>AuthUser</td><td><span class="rel-type one-many">1:N</span></td><td>PatientMessage</td><td>Un usuario puede enviar muchos mensajes</td></tr>
+        <tr><td>Patient</td><td><span class="rel-type one-many">1:N</span></td><td>DoctorAppointment</td><td>Un paciente puede tener muchas citas médicas</td></tr>
+        <tr><td>Patient</td><td><span class="rel-type one-many">1:N</span></td><td>ActivityItem</td><td>Historial de actividad de tomas del paciente</td></tr>
+        <tr><td>AuthUser</td><td><span class="rel-type one-many">1:N</span></td><td>AppNotification</td><td>Notificaciones personales del usuario</td></tr>
+        <tr><td>ComplianceReport</td><td><span class="rel-type one-many">1:N</span></td><td>MedCompliance</td><td>El reporte contiene el desglose por medicamento</td></tr>
+        <tr><td>AuthUser</td><td><span class="rel-type one-many">1:N</span></td><td>Caregiver</td><td>Un usuario aparece como cuidador en varios pacientes</td></tr>
+        <tr><td>Patient</td><td><span class="rel-type one-many">1:N</span></td><td>Caregiver</td><td>Un paciente tiene un grupo de cuidadores</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ ENDPOINTS ═══════════════ -->
+
+  <!-- AUTH -->
+  <div class="section" id="auth-ep">
+    <h2>Auth <span class="badge">7 endpoints</span></h2>
+    <div class="endpoints-list">
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/auth/login</span>
+          <span class="endpoint-desc">Iniciar sesión</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs">
+            <span class="json-tab active" onclick="switchTab(this,'req')">Request</span>
+            <span class="json-tab" onclick="switchTab(this,'res')">Response 200</span>
+          </div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"email"</span>: <span class="str">"usuario@correo.com"</span>,
+  <span class="key">"password"</span>: <span class="str">"miPassword123"</span>
+}</pre></div>
+          <div class="json-panel" data-tab="res"><pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"accessToken"</span>: <span class="str">"eyJhbGci..."</span>,
+    <span class="key">"refreshToken"</span>: <span class="str">"eyJhbGci..."</span>,
+    <span class="key">"user"</span>: {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"nombre"</span>: <span class="str">"Juan García"</span>,
+      <span class="key">"email"</span>: <span class="str">"usuario@correo.com"</span>,
+      <span class="key">"telefono"</span>: <span class="null-val">null</span>,
+      <span class="key">"foto_url"</span>: <span class="null-val">null</span>
+    }
+  }
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/auth/register</span>
+          <span class="endpoint-desc">Registrar cuenta</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs">
+            <span class="json-tab active" onclick="switchTab(this,'req')">Request</span>
+            <span class="json-tab" onclick="switchTab(this,'res')">Response 201</span>
+          </div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"nombre"</span>: <span class="str">"Juan García"</span>,
+  <span class="key">"email"</span>: <span class="str">"usuario@correo.com"</span>,
+  <span class="key">"password"</span>: <span class="str">"miPassword123"</span>
+}</pre></div>
+          <div class="json-panel" data-tab="res"><pre><span class="comment">// Misma estructura que /auth/login 200</span>
+{ <span class="key">"data"</span>: { <span class="key">"accessToken"</span>: <span class="str">"..."</span>, <span class="key">"refreshToken"</span>: <span class="str">"..."</span>, <span class="key">"user"</span>: { ... } } }</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/auth/forgot-password</span>
+          <span class="endpoint-desc">Recuperar contraseña</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{ <span class="key">"email"</span>: <span class="str">"usuario@correo.com"</span> }</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/auth/logout</span>
+          <span class="endpoint-desc">Cerrar sesión</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{ <span class="key">"refresh_token"</span>: <span class="str">"eyJhbGci..."</span> }</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/users/me</span>
+          <span class="endpoint-desc">Perfil del usuario autenticado</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+    <span class="key">"nombre"</span>: <span class="str">"Juan García"</span>,
+    <span class="key">"email"</span>: <span class="str">"usuario@correo.com"</span>,
+    <span class="key">"telefono"</span>: <span class="str">"+52 123 456 7890"</span>,
+    <span class="key">"foto_url"</span>: <span class="null-val">null</span>
+  }
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method PUT">PUT</span>
+          <span class="endpoint-path">/users/me</span>
+          <span class="endpoint-desc">Actualizar perfil</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"nombre"</span>: <span class="str">"Juan García López"</span>,
+  <span class="key">"telefono"</span>: <span class="str">"+52 987 654 3210"</span> <span class="comment">// opcional</span>
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method PUT">PUT</span>
+          <span class="endpoint-path">/users/me/password</span>
+          <span class="endpoint-desc">Cambiar contraseña</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"password_actual"</span>: <span class="str">"miPassword123"</span>,
+  <span class="key">"password_nueva"</span>: <span class="str">"nuevoPassword456"</span>
+}</pre></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PATIENTS -->
+  <div class="section" id="patients-ep">
+    <h2>Pacientes <span class="badge">2 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients</span>
+          <span class="endpoint-desc">Lista de pacientes del usuario</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"nombre"</span>: <span class="str">"María López"</span>,
+      <span class="key">"fecha_nacimiento"</span>: <span class="str">"1945-03-15"</span>,
+      <span class="key">"sexo"</span>: <span class="str">"femenino"</span>,
+      <span class="key">"peso_kg"</span>: <span class="num">62.5</span>,
+      <span class="key">"tipo_sangre"</span>: <span class="str">"O+"</span>,
+      <span class="key">"telefono_emergencia"</span>: <span class="str">"+52 123 456"</span>,
+      <span class="key">"enfermedades"</span>: [<span class="str">"Diabetes tipo 2"</span>, <span class="str">"Hipertensión"</span>],
+      <span class="key">"alergias_medicamentos"</span>: [<span class="str">"Penicilina"</span>],
+      <span class="key">"otras_alergias"</span>: <span class="null-val">null</span>,
+      <span class="key">"medico_nombre"</span>: <span class="str">"Dr. Pérez"</span>,
+      <span class="key">"medico_especialidad"</span>: <span class="str">"Geriatría"</span>,
+      <span class="key">"medico_telefono"</span>: <span class="str">"+52 555 0100"</span>,
+      <span class="key">"notas"</span>: <span class="null-val">null</span>,
+      <span class="key">"rol"</span>: <span class="str">"admin"</span>,
+      <span class="key">"total_medicamentos"</span>: <span class="num">3</span>
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/patients</span>
+          <span class="endpoint-desc">Crear paciente</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span><span class="json-tab" onclick="switchTab(this,'res')">Response 201</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"nombre"</span>: <span class="str">"María López"</span>,               <span class="comment">// requerido</span>
+  <span class="key">"fecha_nacimiento"</span>: <span class="str">"1945-03-15"</span>,    <span class="comment">// requerido</span>
+  <span class="key">"sexo"</span>: <span class="str">"femenino"</span>,                   <span class="comment">// requerido: masculino|femenino|otro</span>
+  <span class="key">"peso_kg"</span>: <span class="num">62.5</span>,                      <span class="comment">// opcional</span>
+  <span class="key">"tipo_sangre"</span>: <span class="str">"O+"</span>,               <span class="comment">// opcional</span>
+  <span class="key">"telefono_emergencia"</span>: <span class="str">"+52 123"</span>,  <span class="comment">// opcional</span>
+  <span class="key">"enfermedades"</span>: [<span class="str">"Diabetes tipo 2"</span>],
+  <span class="key">"alergias_medicamentos"</span>: [<span class="str">"Penicilina"</span>],
+  <span class="key">"otras_alergias"</span>: <span class="null-val">null</span>,
+  <span class="key">"medico_nombre"</span>: <span class="str">"Dr. Pérez"</span>,
+  <span class="key">"medico_especialidad"</span>: <span class="str">"Geriatría"</span>,
+  <span class="key">"medico_telefono"</span>: <span class="str">"+52 555 0100"</span>,
+  <span class="key">"notas"</span>: <span class="str">"Toma pastillas con el desayuno"</span>
+}</pre></div>
+          <div class="json-panel" data-tab="res"><pre>{ <span class="key">"data"</span>: { <span class="comment">/* Patient completo */</span> } }</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MEDICATIONS -->
+  <div class="section" id="meds-ep">
+    <h2>Medicamentos <span class="badge">4 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/medications</span>
+          <span class="endpoint-desc">Lista · ?activos=true para filtrar</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"nombre"</span>: <span class="str">"Metformina"</span>,
+      <span class="key">"dosis"</span>: <span class="num">500</span>,
+      <span class="key">"unidad"</span>: <span class="str">"mg"</span>,
+      <span class="key">"via_administracion"</span>: <span class="str">"oral"</span>,
+      <span class="key">"horarios"</span>: [<span class="str">"08:00"</span>, <span class="str">"20:00"</span>],
+      <span class="key">"cantidad"</span>: <span class="num">1</span>,
+      <span class="key">"frecuencia_horas"</span>: <span class="num">12</span>,
+      <span class="key">"duracion_dias"</span>: <span class="num">30</span>,
+      <span class="key">"dias_semana"</span>: [],
+      <span class="key">"fecha_inicio"</span>: <span class="str">"2025-01-01"</span>,
+      <span class="key">"fecha_fin"</span>: <span class="null-val">null</span>,
+      <span class="key">"indicaciones"</span>: <span class="str">"Tomar con alimentos"</span>,
+      <span class="key">"activo"</span>: <span class="bool">true</span>,
+      <span class="key">"motivo_suspension"</span>: <span class="null-val">null</span>
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/patients/:id/medications</span>
+          <span class="endpoint-desc">Crear medicamento</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"nombre"</span>: <span class="str">"Metformina"</span>,              <span class="comment">// requerido</span>
+  <span class="key">"dosis"</span>: <span class="num">500</span>,                       <span class="comment">// requerido, &gt; 0</span>
+  <span class="key">"unidad"</span>: <span class="str">"mg"</span>,                      <span class="comment">// requerido: mg|ml|g|UI|gotas</span>
+  <span class="key">"via_administracion"</span>: <span class="str">"oral"</span>,        <span class="comment">// requerido: oral|inyectable|tópico|inhalado</span>
+  <span class="key">"horarios"</span>: [<span class="str">"08:00"</span>, <span class="str">"20:00"</span>],     <span class="comment">// requerido, min 1</span>
+  <span class="key">"cantidad"</span>: <span class="num">1</span>,                       <span class="comment">// requerido, pastillas por toma</span>
+  <span class="key">"frecuencia_horas"</span>: <span class="num">12</span>,              <span class="comment">// opcional: 4|6|8|12|24</span>
+  <span class="key">"duracion_dias"</span>: <span class="num">30</span>,                 <span class="comment">// opcional</span>
+  <span class="key">"dias_semana"</span>: [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>],          <span class="comment">// opcional: 1=Lun … 7=Dom</span>
+  <span class="key">"fecha_inicio"</span>: <span class="str">"2025-01-01"</span>,        <span class="comment">// requerido</span>
+  <span class="key">"fecha_fin"</span>: <span class="null-val">null</span>,                    <span class="comment">// opcional</span>
+  <span class="key">"indicaciones"</span>: <span class="str">"Tomar con alimentos"</span> <span class="comment">// opcional</span>
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method PUT">PUT</span>
+          <span class="endpoint-path">/patients/:id/medications/:medId</span>
+          <span class="endpoint-desc">Editar medicamento completo</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre><span class="comment">// Mismos campos que POST /medications</span></pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span>
+          <span class="endpoint-path">/patients/:id/medications/:medId</span>
+          <span class="endpoint-desc">Suspender o reactivar</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"activo"</span>: <span class="bool">false</span>,
+  <span class="key">"motivo"</span>: <span class="str">"Efectos adversos"</span>  <span class="comment">// opcional</span>
+}</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOSES -->
+  <div class="section" id="doses-ep">
+    <h2>Tomas <span class="badge">2 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/doses/today</span>
+          <span class="endpoint-desc">Schedule del día actual</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"fecha"</span>: <span class="str">"2025-06-18"</span>,
+    <span class="key">"total"</span>: <span class="num">4</span>,
+    <span class="key">"tomadas"</span>: <span class="num">2</span>,
+    <span class="key">"pendientes"</span>: <span class="num">2</span>,
+    <span class="key">"schedule"</span>: [
+      {
+        <span class="key">"medication_id"</span>: <span class="str">"uuid"</span>,
+        <span class="key">"medication_nombre"</span>: <span class="str">"Metformina"</span>,
+        <span class="key">"dosis"</span>: <span class="num">500</span>,
+        <span class="key">"unidad"</span>: <span class="str">"mg"</span>,
+        <span class="key">"indicaciones"</span>: <span class="str">"Con alimentos"</span>,
+        <span class="key">"hora_programada"</span>: <span class="str">"08:00"</span>,
+        <span class="key">"fecha"</span>: <span class="str">"2025-06-18"</span>,
+        <span class="key">"estado"</span>: <span class="str">"tomado"</span>,
+        <span class="key">"dose"</span>: { <span class="key">"hora_real"</span>: <span class="str">"08:05"</span> }
+      }
+    ]
+  }
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/patients/:id/medications/:medId/doses</span>
+          <span class="endpoint-desc">Registrar toma o omisión</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"estado"</span>: <span class="str">"tomado"</span>,              <span class="comment">// requerido: tomado|omitido</span>
+  <span class="key">"hora_programada"</span>: <span class="str">"08:00"</span>,    <span class="comment">// requerido</span>
+  <span class="key">"hora_real"</span>: <span class="str">"08:15"</span>,          <span class="comment">// opcional</span>
+  <span class="key">"notas"</span>: <span class="str">"Tomó con jugo"</span>,      <span class="comment">// opcional</span>
+  <span class="key">"motivo_omision"</span>: <span class="null-val">null</span>          <span class="comment">// opcional: Olvido|Efecto adverso|Sin medicamento|Otro</span>
+}</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CAREGIVERS -->
+  <div class="section" id="caregivers-ep">
+    <h2>Cuidadores e Invitaciones <span class="badge">6 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/caregivers</span>
+          <span class="endpoint-desc">Lista de cuidadores del paciente</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"patient_id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"user_id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"rol"</span>: <span class="str">"admin"</span>,
+      <span class="key">"user"</span>: {
+        <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+        <span class="key">"nombre"</span>: <span class="str">"Juan García"</span>,
+        <span class="key">"email"</span>: <span class="str">"juan@correo.com"</span>,
+        <span class="key">"foto_url"</span>: <span class="null-val">null</span>
+      }
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span>
+          <span class="endpoint-path">/patients/:id/caregivers/:userId</span>
+          <span class="endpoint-desc">Cambiar rol del cuidador</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{ <span class="key">"rol"</span>: <span class="str">"admin"</span> }  <span class="comment">// admin | cuidador</span></pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method DELETE">DELETE</span>
+          <span class="endpoint-path">/patients/:id/caregivers/:userId</span>
+          <span class="endpoint-desc">Remover cuidador del grupo</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body"><p style="color:#888780;font-size:13px;padding:4px 0">Sin body. Response 204.</p></div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/invites</span>
+          <span class="endpoint-desc">Invitaciones pendientes</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"email"</span>: <span class="str">"nuevo@correo.com"</span>,
+      <span class="key">"rol"</span>: <span class="str">"cuidador"</span>,
+      <span class="key">"estado"</span>: <span class="str">"pendiente"</span>,
+      <span class="key">"expires_at"</span>: <span class="str">"2025-07-01T00:00:00Z"</span>
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/patients/:id/invites</span>
+          <span class="endpoint-desc">Enviar invitación</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"email"</span>: <span class="str">"nuevo@correo.com"</span>,    <span class="comment">// requerido</span>
+  <span class="key">"rol"</span>: <span class="str">"cuidador"</span>,             <span class="comment">// requerido: admin|cuidador</span>
+  <span class="key">"mensaje"</span>: <span class="str">"Te invito a cuidar a mamá"</span> <span class="comment">// opcional</span>
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method DELETE">DELETE</span>
+          <span class="endpoint-path">/patients/:id/invites/:inviteId</span>
+          <span class="endpoint-desc">Cancelar invitación</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body"><p style="color:#888780;font-size:13px;padding:4px 0">Sin body. Response 204.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="section" id="reports-ep">
+    <h2>Reportes <span class="badge">2 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/reports/compliance</span>
+          <span class="endpoint-desc">Reporte cumplimiento · ?desde= &hasta= &med_id=</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: {
+    <span class="key">"porcentaje"</span>: <span class="num">87.5</span>,
+    <span class="key">"total"</span>: <span class="num">16</span>,
+    <span class="key">"tomadas"</span>: <span class="num">14</span>,
+    <span class="key">"omitidas"</span>: <span class="num">2</span>,
+    <span class="key">"desde"</span>: <span class="str">"2025-06-01"</span>,
+    <span class="key">"hasta"</span>: <span class="str">"2025-06-18"</span>,
+    <span class="key">"desglose"</span>: [
+      {
+        <span class="key">"nombre"</span>: <span class="str">"Metformina"</span>,
+        <span class="key">"total"</span>: <span class="num">10</span>,
+        <span class="key">"tomadas"</span>: <span class="num">9</span>,
+        <span class="key">"omitidas"</span>: <span class="num">1</span>,
+        <span class="key">"porcentaje"</span>: <span class="num">90</span>
+      }
+    ]
+  }
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/activity</span>
+          <span class="endpoint-desc">Historial de actividad · ?limit=20 &page=1</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"estado"</span>: <span class="str">"tomado"</span>,
+      <span class="key">"fecha"</span>: <span class="str">"2025-06-18"</span>,
+      <span class="key">"hora_programada"</span>: <span class="str">"08:00"</span>,
+      <span class="key">"registrado_por"</span>: <span class="str">"Juan García"</span>,
+      <span class="key">"medicamento_nombre"</span>: <span class="str">"Metformina"</span>
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="section" id="notif-ep">
+    <h2>Notificaciones <span class="badge">2 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/users/me/notifications</span>
+          <span class="endpoint-desc">Notificaciones del usuario · ?leidas=false</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"titulo"</span>: <span class="str">"Toma pendiente"</span>,
+      <span class="key">"cuerpo"</span>: <span class="str">"Metformina a las 08:00"</span>,
+      <span class="key">"tipo"</span>: <span class="str">"recordatorio"</span>,
+      <span class="key">"leida"</span>: <span class="bool">false</span>,
+      <span class="key">"patient_id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"created_at"</span>: <span class="str">"2025-06-18T08:00:00Z"</span>
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method PATCH">PATCH</span>
+          <span class="endpoint-path">/users/me/notifications/:notifId/read</span>
+          <span class="endpoint-desc">Marcar notificación como leída</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body"><p style="color:#888780;font-size:13px;padding:4px 0">Sin body. Actualiza localmente sin refetch.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGES -->
+  <div class="section" id="messages-ep">
+    <h2>Mensajes entre cuidadores <span class="badge">3 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/messages</span>
+          <span class="endpoint-desc">Historial de mensajes del paciente</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"patient_id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"user_id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"user_nombre"</span>: <span class="str">"Juan García"</span>,
+      <span class="key">"user_foto_url"</span>: <span class="null-val">null</span>,
+      <span class="key">"contenido"</span>: <span class="str">"No te olvides que hoy toma la pastilla de las 8"</span>,
+      <span class="key">"created_at"</span>: <span class="str">"2025-06-18T07:30:00Z"</span>
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/patients/:id/messages</span>
+          <span class="endpoint-desc">Enviar mensaje</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{ <span class="key">"contenido"</span>: <span class="str">"No te olvides que hoy toma la pastilla de las 8"</span> }</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method DELETE">DELETE</span>
+          <span class="endpoint-path">/patients/:id/messages/:messageId</span>
+          <span class="endpoint-desc">Eliminar mensaje propio</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body"><p style="color:#888780;font-size:13px;padding:4px 0">Sin body. Response 204.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- APPOINTMENTS -->
+  <div class="section" id="appt-ep">
+    <h2>Citas médicas <span class="badge">3 endpoints</span></h2>
+    <div class="endpoints-list">
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method GET">GET</span>
+          <span class="endpoint-path">/patients/:id/appointments</span>
+          <span class="endpoint-desc">Citas del paciente</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'res')">Response 200</span></div>
+          <div class="json-panel active" data-tab="res"><pre>{
+  <span class="key">"data"</span>: [
+    {
+      <span class="key">"id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"patient_id"</span>: <span class="str">"uuid"</span>,
+      <span class="key">"fecha"</span>: <span class="str">"2025-07-10"</span>,
+      <span class="key">"hora"</span>: <span class="str">"09:30"</span>,
+      <span class="key">"motivo"</span>: <span class="str">"Revisión general"</span>,
+      <span class="key">"medico"</span>: <span class="str">"Dr. Pérez"</span>
+    }
+  ]
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method POST">POST</span>
+          <span class="endpoint-path">/patients/:id/appointments</span>
+          <span class="endpoint-desc">Crear cita médica</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body">
+          <div class="json-tabs"><span class="json-tab active" onclick="switchTab(this,'req')">Request</span></div>
+          <div class="json-panel active" data-tab="req"><pre>{
+  <span class="key">"fecha"</span>: <span class="str">"2025-07-10"</span>,           <span class="comment">// requerido: YYYY-MM-DD</span>
+  <span class="key">"hora"</span>: <span class="str">"09:30"</span>,               <span class="comment">// opcional: HH:mm</span>
+  <span class="key">"motivo"</span>: <span class="str">"Revisión general"</span>,   <span class="comment">// opcional</span>
+  <span class="key">"medico"</span>: <span class="str">"Dr. Pérez"</span>         <span class="comment">// opcional</span>
+}</pre></div>
+        </div>
+      </div>
+
+      <div class="endpoint-card">
+        <div class="endpoint-header" onclick="toggle(this)">
+          <span class="method DELETE">DELETE</span>
+          <span class="endpoint-path">/patients/:id/appointments/:appointmentId</span>
+          <span class="endpoint-desc">Eliminar cita</span>
+          <span class="chevron">▼</span>
+        </div>
+        <div class="endpoint-body"><p style="color:#888780;font-size:13px;padding:4px 0">Sin body. Response 204.</p></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  const open = body.classList.toggle('open');
+  chevron.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+function switchTab(tab, key) {
+  const card = tab.closest('.endpoint-body');
+  card.querySelectorAll('.json-tab').forEach(t => t.classList.remove('active'));
+  card.querySelectorAll('.json-panel').forEach(p => p.classList.remove('active'));
+  tab.classList.add('active');
+  card.querySelectorAll('.json-panel').forEach(p => { if (p.dataset.tab === key) p.classList.add('active'); });
+}
+
+function setActive(link) {
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  link.classList.add('active');
+}
+</script>
+</body>
+</html>
