@@ -1,38 +1,45 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class DoctorAppointment {
   final String id;
   final String patientId;
-  final String fecha;
-  final String? hora;
-  final String? motivo;
-  final String? medico;
+  final String fecha;       // YYYY-MM-DD
+  final String? hora;       // HH:MM
+  final String? medicoNombre;
+  final String? especialidad;
+  final String? lugar;
+  final String? notas;
 
   const DoctorAppointment({
     required this.id,
     required this.patientId,
     required this.fecha,
     this.hora,
-    this.motivo,
-    this.medico,
+    this.medicoNombre,
+    this.especialidad,
+    this.lugar,
+    this.notas,
   });
 
   factory DoctorAppointment.fromJson(Map<String, dynamic> j) => DoctorAppointment(
-        id: j['id'],
-        patientId: j['patient_id'],
-        fecha: j['fecha'] ?? '',
+        id: j['id']?.toString() ?? '',
+        patientId: j['patient_id']?.toString() ?? '',
+        fecha: (j['fecha'] ?? '').toString().split('T').first,
         hora: j['hora'],
-        motivo: j['motivo'],
-        medico: j['medico'],
+        medicoNombre: j['medico_nombre'],
+        especialidad: j['especialidad'],
+        lugar: j['lugar'],
+        notas: j['notas'],
       );
 
   DateTime? get fechaDate => DateTime.tryParse(fecha);
 }
 
 class AppointmentProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
 
   List<DoctorAppointment> _appointments = [];
   bool _loading = false;
@@ -42,6 +49,15 @@ class AppointmentProvider extends ChangeNotifier {
   bool get loading => _loading;
   String? get error => _error;
 
+  static List _parseList(dynamic body) {
+    if (body is List) return body;
+    if (body is Map) {
+      final d = body['data'] ?? body['appointments'];
+      if (d is List) return d;
+    }
+    return [];
+  }
+
   Future<void> fetchAppointments(Map<String, String> headers, String patientId) async {
     _loading = true;
     _error = null;
@@ -49,8 +65,7 @@ class AppointmentProvider extends ChangeNotifier {
     try {
       final res = await http.get(Uri.parse('$_baseUrl/patients/$patientId/appointments'), headers: headers);
       if (res.statusCode == 200) {
-        final list = jsonDecode(res.body)['data'] as List;
-        _appointments = list.map((e) => DoctorAppointment.fromJson(e)).toList();
+        _appointments = _parseList(jsonDecode(res.body)).map((e) => DoctorAppointment.fromJson(e)).toList();
       } else {
         _error = jsonDecode(res.body)['message'] ?? 'Error al cargar citas';
       }

@@ -195,7 +195,10 @@ class _EmptyState extends StatelessWidget {
           const SizedBox(height: 4),
           const Text('Agrega el primer medicamento', style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
           const SizedBox(height: 20),
-          AppButton(label: 'Agregar medicamento', onPressed: onAdd),
+          SizedBox(
+            width: 200,
+            child: AppButton(label: 'Agregar medicamento', onPressed: onAdd),
+          ),
         ],
       ),
     );

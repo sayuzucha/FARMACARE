@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class DoseSlot {
   final String medicationId;
@@ -69,7 +70,7 @@ class DoseSummary {
 }
 
 class DoseProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
 
   DoseSummary? _today;
   bool _loading = false;

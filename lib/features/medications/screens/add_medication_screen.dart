@@ -34,6 +34,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   String? _dosisError;
   String? _horariosError;
   String? _fechaInicioError;
+  String? _fechaFinError;
 
   static const _unidades = ['mg', 'ml', 'g', 'UI', 'gotas'];
   static const _vias = ['oral', 'inyectable', 'tópico', 'inhalado'];
@@ -63,15 +64,50 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     }
   }
 
-  Future<void> _pickDate(TextEditingController ctrl) async {
+  String _fmt(DateTime d) =>
+      '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  DateTime? get _fechaInicioDate => DateTime.tryParse(_fechaInicioCtrl.text.trim());
+
+  Future<void> _pickFechaInicio() async {
     final d = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _fechaInicioDate ?? DateTime.now(),
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (d != null) {
-      ctrl.text = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+      setState(() {
+        _fechaInicioCtrl.text = _fmt(d);
+        // Si la fecha fin ya fue elegida y ahora es inválida, la limpiamos
+        final fin = DateTime.tryParse(_fechaFinCtrl.text.trim());
+        if (fin != null && !fin.isAfter(d)) {
+          _fechaFinCtrl.clear();
+          _fechaFinError = null;
+        }
+        _fechaInicioError = null;
+      });
+    }
+  }
+
+  Future<void> _pickFechaFin() async {
+    final inicio = _fechaInicioDate;
+    // La fecha fin debe ser al menos el día siguiente a la fecha inicio
+    final firstDate = inicio != null
+        ? inicio.add(const Duration(days: 1))
+        : DateTime.now();
+    final initialDate = firstDate.isAfter(DateTime.now()) ? firstDate : firstDate;
+    final d = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: DateTime(2100),
+    );
+    if (d != null) {
+      setState(() {
+        _fechaFinCtrl.text = _fmt(d);
+        _fechaFinError = null;
+      });
     }
   }
 
@@ -83,6 +119,17 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       _dosisError = (dosis == null || dosis <= 0) ? 'Ingresa una dosis válida' : null;
       _horariosError = _horarios.isEmpty ? 'Agrega al menos un horario' : null;
       _fechaInicioError = _fechaInicioCtrl.text.trim().isEmpty ? 'Campo requerido' : null;
+
+      // Validación fecha fin > fecha inicio
+      final inicio = DateTime.tryParse(_fechaInicioCtrl.text.trim());
+      final fin = DateTime.tryParse(_fechaFinCtrl.text.trim());
+      if (fin != null && inicio != null && !fin.isAfter(inicio)) {
+        _fechaFinError = 'Debe ser posterior a la fecha de inicio';
+        ok = false;
+      } else {
+        _fechaFinError = null;
+      }
+
       if (_nombreError != null || _dosisError != null || _horariosError != null || _fechaInicioError != null) ok = false;
     });
     return ok;
@@ -236,7 +283,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               ),
             const SizedBox(height: 20),
             GestureDetector(
-              onTap: () => _pickDate(_fechaInicioCtrl),
+              onTap: _pickFechaInicio,
               child: AbsorbPointer(
                 child: AppTextField(
                   label: 'Fecha de inicio',
@@ -249,13 +296,20 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             ),
             const SizedBox(height: 16),
             GestureDetector(
-              onTap: () => _pickDate(_fechaFinCtrl),
+              onTap: _fechaInicioCtrl.text.trim().isEmpty
+                  ? () {
+                      setState(() => _fechaInicioError = 'Elige primero la fecha de inicio');
+                    }
+                  : _pickFechaFin,
               child: AbsorbPointer(
                 child: AppTextField(
                   label: 'Fecha de fin (opcional)',
-                  hint: 'YYYY-MM-DD',
+                  hint: _fechaInicioCtrl.text.isEmpty
+                      ? 'Elige primero la fecha de inicio'
+                      : 'Posterior al ${_fechaInicioCtrl.text}',
                   controller: _fechaFinCtrl,
-                  prefixIcon: Icons.calendar_today_outlined,
+                  errorText: _fechaFinError,
+                  prefixIcon: Icons.event_outlined,
                 ),
               ),
             ),

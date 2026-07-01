@@ -38,7 +38,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       password: _passCtrl.text,
     );
     if (!mounted) return;
-    if (err != null) setState(() { _loading = false; _error = err; });
+    if (err != null) {
+      setState(() { _loading = false; _error = err; });
+    } else {
+      context.go('/patients');
+    }
   }
 
   @override

@@ -335,8 +335,10 @@ class _AppointmentCard extends StatelessWidget {
               children: [
                 Text(appointment.fecha, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.infoText)),
                 if (appointment.hora != null) Text(appointment.hora!, style: const TextStyle(fontSize: 11, color: AppColors.infoText)),
-                if (appointment.motivo != null) Text(appointment.motivo!, style: const TextStyle(fontSize: 12, color: AppColors.infoText)),
-                if (appointment.medico != null) Text('Dr. ${appointment.medico}', style: const TextStyle(fontSize: 11, color: AppColors.infoText)),
+                if (appointment.medicoNombre != null) Text('Dr. ${appointment.medicoNombre}', style: const TextStyle(fontSize: 12, color: AppColors.infoText)),
+                if (appointment.especialidad != null) Text(appointment.especialidad!, style: const TextStyle(fontSize: 11, color: AppColors.infoText)),
+                if (appointment.lugar != null) Text(appointment.lugar!, style: const TextStyle(fontSize: 11, color: AppColors.infoText)),
+                if (appointment.notas != null) Text(appointment.notas!, style: const TextStyle(fontSize: 11, color: AppColors.infoText)),
               ],
             ),
           ),
@@ -359,8 +361,10 @@ class _AddAppointmentSheet extends StatefulWidget {
 class _AddAppointmentSheetState extends State<_AddAppointmentSheet> {
   final _fechaCtrl = TextEditingController();
   final _horaCtrl = TextEditingController();
-  final _motivoCtrl = TextEditingController();
-  final _medicoCtrl = TextEditingController();
+  final _medicoNombreCtrl = TextEditingController();
+  final _especialidadCtrl = TextEditingController();
+  final _lugarCtrl = TextEditingController();
+  final _notasCtrl = TextEditingController();
   bool _loading = false;
 
   @override
@@ -374,7 +378,8 @@ class _AddAppointmentSheetState extends State<_AddAppointmentSheet> {
 
   @override
   void dispose() {
-    _fechaCtrl.dispose(); _horaCtrl.dispose(); _motivoCtrl.dispose(); _medicoCtrl.dispose();
+    _fechaCtrl.dispose(); _horaCtrl.dispose(); _medicoNombreCtrl.dispose();
+    _especialidadCtrl.dispose(); _lugarCtrl.dispose(); _notasCtrl.dispose();
     super.dispose();
   }
 
@@ -398,8 +403,10 @@ class _AddAppointmentSheetState extends State<_AddAppointmentSheet> {
           {
             'fecha': _fechaCtrl.text.trim(),
             if (_horaCtrl.text.isNotEmpty) 'hora': _horaCtrl.text.trim(),
-            if (_motivoCtrl.text.isNotEmpty) 'motivo': _motivoCtrl.text.trim(),
-            if (_medicoCtrl.text.isNotEmpty) 'medico': _medicoCtrl.text.trim(),
+            if (_medicoNombreCtrl.text.isNotEmpty) 'medico_nombre': _medicoNombreCtrl.text.trim(),
+            if (_especialidadCtrl.text.isNotEmpty) 'especialidad': _especialidadCtrl.text.trim(),
+            if (_lugarCtrl.text.isNotEmpty) 'lugar': _lugarCtrl.text.trim(),
+            if (_notasCtrl.text.isNotEmpty) 'notas': _notasCtrl.text.trim(),
           },
         );
     if (!mounted) return;
@@ -413,26 +420,32 @@ class _AddAppointmentSheetState extends State<_AddAppointmentSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
-      decoration: const BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: AppColors.borderLight, borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(height: 16),
-          const Text('Nueva cita médica', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
-          const SizedBox(height: 16),
-          GestureDetector(onTap: _pickDate, child: AbsorbPointer(child: AppTextField(label: 'Fecha', hint: 'YYYY-MM-DD', controller: _fechaCtrl, prefixIcon: Icons.calendar_today_outlined))),
-          const SizedBox(height: 12),
-          GestureDetector(onTap: _pickTime, child: AbsorbPointer(child: AppTextField(label: 'Hora (opcional)', hint: 'HH:MM', controller: _horaCtrl, prefixIcon: Icons.access_time_rounded))),
-          const SizedBox(height: 12),
-          AppTextField(label: 'Motivo (opcional)', hint: 'Ej. Revisión general', controller: _motivoCtrl),
-          const SizedBox(height: 12),
-          AppTextField(label: 'Médico (opcional)', hint: 'Ej. Dr. García', controller: _medicoCtrl, prefixIcon: Icons.medical_services_outlined),
-          const SizedBox(height: 20),
-          AppButton(label: 'Guardar cita', onPressed: _save, loading: _loading),
-        ],
+    return SingleChildScrollView(
+      child: Container(
+        padding: EdgeInsets.fromLTRB(20, 20, 20, MediaQuery.of(context).viewInsets.bottom + 20),
+        decoration: const BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: AppColors.borderLight, borderRadius: BorderRadius.circular(2)))),
+            const SizedBox(height: 16),
+            const Text('Nueva cita médica', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            const SizedBox(height: 16),
+            GestureDetector(onTap: _pickDate, child: AbsorbPointer(child: AppTextField(label: 'Fecha *', hint: 'YYYY-MM-DD', controller: _fechaCtrl, prefixIcon: Icons.calendar_today_outlined))),
+            const SizedBox(height: 12),
+            GestureDetector(onTap: _pickTime, child: AbsorbPointer(child: AppTextField(label: 'Hora (opcional)', hint: 'HH:MM', controller: _horaCtrl, prefixIcon: Icons.access_time_rounded))),
+            const SizedBox(height: 12),
+            AppTextField(label: 'Médico (opcional)', hint: 'Ej. Dr. García', controller: _medicoNombreCtrl, prefixIcon: Icons.medical_services_outlined),
+            const SizedBox(height: 12),
+            AppTextField(label: 'Especialidad (opcional)', hint: 'Ej. Cardiología', controller: _especialidadCtrl),
+            const SizedBox(height: 12),
+            AppTextField(label: 'Lugar (opcional)', hint: 'Ej. IMSS, Hospital General', controller: _lugarCtrl, prefixIcon: Icons.location_on_outlined),
+            const SizedBox(height: 12),
+            AppTextField(label: 'Notas (opcional)', hint: 'Ej. Llevar estudios previos', controller: _notasCtrl, maxLines: 2),
+            const SizedBox(height: 20),
+            AppButton(label: 'Guardar cita', onPressed: _save, loading: _loading),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class Patient {
   final String id;
@@ -57,8 +58,8 @@ class Patient {
         pesoKg: j['peso_kg']?.toDouble(),
         tipoSangre: j['tipo_sangre'],
         telefonoEmergencia: j['telefono_emergencia'],
-        enfermedades: List<String>.from(j['enfermedades'] ?? []),
-        alergiasMedicamentos: List<String>.from(j['alergias_medicamentos'] ?? []),
+        enfermedades: _parseStringList(j['enfermedades']),
+        alergiasMedicamentos: _parseStringList(j['alergias_medicamentos']),
         otrasAlergias: j['otras_alergias'],
         medicoNombre: j['medico_nombre'],
         medicoEspecialidad: j['medico_especialidad'],
@@ -67,10 +68,25 @@ class Patient {
         rol: j['rol'],
         totalMedicamentos: j['total_medicamentos'] ?? 0,
       );
+
+  static List<String> _parseStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) return List<String>.from(value);
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty || trimmed == '[]') return [];
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is List) return List<String>.from(decoded);
+      } catch (_) {}
+      return [trimmed];
+    }
+    return [];
+  }
 }
 
 class PatientProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
 
   List<Patient> _patients = [];
   Patient? _activePatient;
@@ -94,13 +110,15 @@ class PatientProvider extends ChangeNotifier {
     try {
       final res = await http.get(Uri.parse('$_baseUrl/patients'), headers: headers);
       if (res.statusCode == 200) {
-        final list = jsonDecode(res.body)['data'] as List;
-        _patients = list.map((e) => Patient.fromJson(e)).toList();
+        final body = jsonDecode(res.body);
+        final raw = body['data'] ?? body['patients'] ?? body;
+        final list = raw is List ? raw : [];
+        _patients = list.map((e) => Patient.fromJson(e as Map<String, dynamic>)).toList();
       } else {
-        _error = jsonDecode(res.body)['message'];
+        _error = 'Error ${res.statusCode}: ${jsonDecode(res.body)['message'] ?? res.body}';
       }
-    } catch (_) {
-      _error = 'Error de conexión';
+    } catch (e) {
+      _error = 'Error: $e';
     }
     _loading = false;
     notifyListeners();
@@ -119,6 +137,42 @@ class PatientProvider extends ChangeNotifier {
         return null;
       }
       return body['message'] ?? 'Error al crear paciente';
+    } catch (_) {
+      return 'Error de conexión';
+    }
+  }
+
+  Future<String?> updatePatient(Map<String, String> headers, String patientId, Map<String, dynamic> data) async {
+    try {
+      final res = await http.put(
+        Uri.parse('$_baseUrl/patients/$patientId'),
+        headers: headers,
+        body: jsonEncode(data),
+      );
+      final body = jsonDecode(res.body);
+      if (res.statusCode == 200) {
+        await fetchPatients(headers);
+        return null;
+      }
+      return body['message'] ?? 'Error al actualizar';
+    } catch (_) {
+      return 'Error de conexión';
+    }
+  }
+
+  Future<String?> deletePatient(Map<String, String> headers, String patientId) async {
+    try {
+      final res = await http.delete(
+        Uri.parse('$_baseUrl/patients/$patientId'),
+        headers: headers,
+      );
+      if (res.statusCode == 200 || res.statusCode == 204) {
+        _patients.removeWhere((p) => p.id == patientId);
+        if (_activePatient?.id == patientId) _activePatient = null;
+        notifyListeners();
+        return null;
+      }
+      return jsonDecode(res.body)['message'] ?? 'Error al eliminar';
     } catch (_) {
       return 'Error de conexión';
     }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class Medication {
   final String id;
@@ -37,17 +38,46 @@ class Medication {
     this.motivoSuspension,
   });
 
+  static List<String> _parseStringList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) return List<String>.from(value);
+    if (value is String) {
+      final t = value.trim();
+      if (t.isEmpty || t == '[]') return [];
+      try {
+        final d = jsonDecode(t);
+        if (d is List) return List<String>.from(d);
+      } catch (_) {}
+      return [t];
+    }
+    return [];
+  }
+
+  static List<int> _parseIntList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) return List<int>.from(value.map((e) => int.tryParse(e.toString()) ?? 0));
+    if (value is String) {
+      final t = value.trim();
+      if (t.isEmpty || t == '[]') return [];
+      try {
+        final d = jsonDecode(t);
+        if (d is List) return List<int>.from(d.map((e) => int.tryParse(e.toString()) ?? 0));
+      } catch (_) {}
+    }
+    return [];
+  }
+
   factory Medication.fromJson(Map<String, dynamic> j) => Medication(
-        id: j['id'],
-        nombre: j['nombre'],
+        id: j['id']?.toString() ?? '',
+        nombre: j['nombre'] ?? '',
         dosis: (j['dosis'] ?? 0).toDouble(),
         unidad: j['unidad'] ?? '',
         viaAdministracion: j['via_administracion'] ?? '',
-        horarios: List<String>.from(j['horarios'] ?? []),
+        horarios: _parseStringList(j['horarios']),
         cantidad: j['cantidad'] ?? 1,
         frecuenciaHoras: j['frecuencia_horas'],
         duracionDias: j['duracion_dias'],
-        diasSemana: List<int>.from(j['dias_semana'] ?? []),
+        diasSemana: _parseIntList(j['dias_semana']),
         fechaInicio: j['fecha_inicio'] ?? '',
         fechaFin: j['fecha_fin'],
         indicaciones: j['indicaciones'],
@@ -72,7 +102,7 @@ class Medication {
 }
 
 class MedicationProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
 
   List<Medication> _medications = [];
   bool _loading = false;
@@ -82,6 +112,15 @@ class MedicationProvider extends ChangeNotifier {
   List<Medication> get active => _medications.where((m) => m.activo).toList();
   bool get loading => _loading;
   String? get error => _error;
+
+  static List _parseList(dynamic body) {
+    if (body is List) return body;
+    if (body is Map) {
+      final d = body['data'] ?? body['medications'];
+      if (d is List) return d;
+    }
+    return [];
+  }
 
   Future<void> fetchMedications(Map<String, String> headers, String patientId, {bool soloActivos = false}) async {
     _loading = true;
@@ -93,13 +132,12 @@ class MedicationProvider extends ChangeNotifier {
       );
       final res = await http.get(uri, headers: headers);
       if (res.statusCode == 200) {
-        final list = jsonDecode(res.body)['data'] as List;
-        _medications = list.map((e) => Medication.fromJson(e)).toList();
+        _medications = _parseList(jsonDecode(res.body)).map((e) => Medication.fromJson(e as Map<String, dynamic>)).toList();
       } else {
         _error = jsonDecode(res.body)['message'] ?? 'Error al cargar medicamentos';
       }
-    } catch (_) {
-      _error = 'Error de conexión';
+    } catch (e) {
+      _error = 'Error: $e';
     }
     _loading = false;
     notifyListeners();

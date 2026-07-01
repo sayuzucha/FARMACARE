@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class PatientMessage {
   final String id;
   final String patientId;
   final String userId;
   final String userName;
-  final String? userFotoUrl;
   final String contenido;
   final DateTime createdAt;
 
@@ -16,24 +16,22 @@ class PatientMessage {
     required this.patientId,
     required this.userId,
     required this.userName,
-    this.userFotoUrl,
     required this.contenido,
     required this.createdAt,
   });
 
   factory PatientMessage.fromJson(Map<String, dynamic> j) => PatientMessage(
-        id: j['id'],
-        patientId: j['patient_id'],
-        userId: j['user_id'],
+        id: j['id']?.toString() ?? '',
+        patientId: j['patient_id']?.toString() ?? '',
+        userId: j['user_id']?.toString() ?? '',
         userName: j['user_nombre'] ?? j['user']?['nombre'] ?? 'Usuario',
-        userFotoUrl: j['user_foto_url'] ?? j['user']?['foto_url'],
         contenido: j['contenido'] ?? '',
         createdAt: DateTime.tryParse(j['created_at'] ?? '') ?? DateTime.now(),
       );
 }
 
 class MessageProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
 
   List<PatientMessage> _messages = [];
   bool _loading = false;
@@ -45,6 +43,15 @@ class MessageProvider extends ChangeNotifier {
   bool get sending => _sending;
   String? get error => _error;
 
+  static List _parseList(dynamic body) {
+    if (body is List) return body;
+    if (body is Map) {
+      final d = body['data'] ?? body['messages'];
+      if (d is List) return d;
+    }
+    return [];
+  }
+
   Future<void> fetchMessages(Map<String, String> headers, String patientId) async {
     _loading = true;
     _error = null;
@@ -52,13 +59,12 @@ class MessageProvider extends ChangeNotifier {
     try {
       final res = await http.get(Uri.parse('$_baseUrl/patients/$patientId/messages'), headers: headers);
       if (res.statusCode == 200) {
-        final list = jsonDecode(res.body)['data'] as List;
-        _messages = list.map((e) => PatientMessage.fromJson(e)).toList();
+        _messages = _parseList(jsonDecode(res.body)).map((e) => PatientMessage.fromJson(e)).toList();
       } else {
         _error = jsonDecode(res.body)['message'] ?? 'Error al cargar mensajes';
       }
-    } catch (_) {
-      _error = 'Error de conexión';
+    } catch (e) {
+      _error = 'Error: $e';
     }
     _loading = false;
     notifyListeners();

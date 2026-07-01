@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class MedCompliance {
   final String nombre;
@@ -69,7 +70,7 @@ class ActivityItem {
 }
 
 class ReportProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
 
   ComplianceReport? _report;
   List<ActivityItem> _activity = [];
@@ -109,7 +110,8 @@ class ReportProvider extends ChangeNotifier {
       final uri = Uri.parse('$_baseUrl/patients/$patientId/activity').replace(queryParameters: {'limit': '20', 'page': '$page'});
       final res = await http.get(uri, headers: headers);
       if (res.statusCode == 200) {
-        final list = jsonDecode(res.body)['data'] as List;
+        final body = jsonDecode(res.body);
+        final list = (body is List ? body : (body['data'] ?? body['activity'] ?? [])) as List;
         _activity = list.map((e) => ActivityItem.fromJson(e)).toList();
         notifyListeners();
       }

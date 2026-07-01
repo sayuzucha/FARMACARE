@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
@@ -33,11 +33,15 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                AvatarWidget(name: user?.nombre ?? '', size: 64, photoUrl: user?.fotoUrl),
+                AvatarWidget(name: user?.nombre ?? '', size: 64),
                 const SizedBox(height: 12),
                 Text(user?.nombre ?? '', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
                 const SizedBox(height: 4),
                 Text(user?.email ?? '', style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+                if (user?.telefono != null) ...[
+                  const SizedBox(height: 2),
+                  Text(user!.telefono!, style: const TextStyle(fontSize: 13, color: AppColors.textTertiary)),
+                ],
               ],
             ),
           ),
@@ -46,36 +50,18 @@ class ProfileScreen extends StatelessWidget {
             color: AppColors.background,
             child: Column(
               children: [
-                _OptionTile(
-                  icon: Icons.edit_outlined,
-                  label: 'Editar perfil',
-                  onTap: () => _showEditSheet(context, auth),
-                ),
+                _OptionTile(icon: Icons.edit_outlined, label: 'Editar perfil', onTap: () => _showEditSheet(context, auth)),
                 const Divider(height: 1, indent: 56, color: AppColors.borderLight),
-                _OptionTile(
-                  icon: Icons.lock_outline_rounded,
-                  label: 'Cambiar contraseña',
-                  onTap: () => _showChangePasswordSheet(context, auth),
-                ),
+                _OptionTile(icon: Icons.lock_outline_rounded, label: 'Cambiar contraseña', onTap: () => _showChangePasswordSheet(context, auth)),
                 const Divider(height: 1, indent: 56, color: AppColors.borderLight),
-                _OptionTile(
-                  icon: Icons.notifications_outlined,
-                  label: 'Notificaciones',
-                  onTap: () => context.push('/notifications'),
-                ),
+                _OptionTile(icon: Icons.notifications_outlined, label: 'Notificaciones', onTap: () => context.push('/notifications')),
               ],
             ),
           ),
           const SizedBox(height: 16),
           Container(
             color: AppColors.background,
-            child: _OptionTile(
-              icon: Icons.logout_rounded,
-              label: 'Cerrar sesión',
-              labelColor: AppColors.error,
-              iconColor: AppColors.error,
-              onTap: () => _showLogoutModal(context, auth),
-            ),
+            child: _OptionTile(icon: Icons.logout_rounded, label: 'Cerrar sesión', labelColor: AppColors.error, iconColor: AppColors.error, onTap: () => _showLogoutModal(context, auth)),
           ),
           const SizedBox(height: 24),
         ],
@@ -85,21 +71,11 @@ class ProfileScreen extends StatelessWidget {
   }
 
   void _showEditSheet(BuildContext context, AuthProvider auth) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _EditProfileSheet(auth: auth),
-    );
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => _EditProfileSheet(auth: auth));
   }
 
   void _showChangePasswordSheet(BuildContext context, AuthProvider auth) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ChangePasswordSheet(auth: auth),
-    );
+    showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.transparent, builder: (_) => _ChangePasswordSheet(auth: auth));
   }
 
   void _showLogoutModal(BuildContext context, AuthProvider auth) {
@@ -137,7 +113,6 @@ class _EditProfileSheet extends StatefulWidget {
 class _EditProfileSheetState extends State<_EditProfileSheet> {
   late final TextEditingController _nombreCtrl;
   late final TextEditingController _telefonoCtrl;
-  String? _imagePath;
   bool _loading = false;
 
   @override
@@ -154,17 +129,12 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
     super.dispose();
   }
 
-  Future<void> _pickImage() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _imagePath = picked.path);
-  }
-
   Future<void> _save() async {
+    if (_nombreCtrl.text.trim().isEmpty) return;
     setState(() => _loading = true);
     try {
-      const baseUrl = 'http://10.0.2.2:3000/api/v1';
       final res = await http.put(
-        Uri.parse('$baseUrl/users/me'),
+        Uri.parse('${ApiConstants.baseUrl}/users/me'),
         headers: widget.auth.authHeaders(),
         body: jsonEncode({
           'nombre': _nombreCtrl.text.trim(),
@@ -197,31 +167,17 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
           const SizedBox(height: 16),
           const Text('Editar perfil', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
           const SizedBox(height: 20),
-          GestureDetector(
-            onTap: _pickImage,
-            child: Stack(
-              children: [
-                AvatarWidget(name: widget.auth.user?.nombre ?? '', size: 60, photoUrl: widget.auth.user?.fotoUrl),
-                Positioned(bottom: 0, right: 0, child: Container(
-                  width: 20, height: 20,
-                  decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle, border: Border.all(color: AppColors.background, width: 2)),
-                  child: const Icon(Icons.camera_alt_rounded, size: 10, color: Colors.white),
-                )),
-              ],
-            ),
-          ),
+          AvatarWidget(name: widget.auth.user?.nombre ?? '', size: 60),
           const SizedBox(height: 16),
           AppTextField(label: 'Nombre', hint: 'Tu nombre', controller: _nombreCtrl),
           const SizedBox(height: 12),
           AppTextField(label: 'Teléfono', hint: '+52 123 456 7890', controller: _telefonoCtrl, keyboardType: TextInputType.phone),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(child: AppButton(label: 'Cancelar', onPressed: () => Navigator.pop(context), variant: AppButtonVariant.secondary)),
-              const SizedBox(width: 10),
-              Expanded(child: AppButton(label: 'Guardar', onPressed: _save, loading: _loading)),
-            ],
-          ),
+          Row(children: [
+            Expanded(child: AppButton(label: 'Cancelar', onPressed: () => Navigator.pop(context), variant: AppButtonVariant.secondary)),
+            const SizedBox(width: 10),
+            Expanded(child: AppButton(label: 'Guardar', onPressed: _save, loading: _loading)),
+          ]),
         ],
       ),
     );
@@ -252,19 +208,12 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
   }
 
   Future<void> _save() async {
-    if (_nuevaCtrl.text.length < 6) {
-      setState(() => _confirmarError = 'Mínimo 6 caracteres');
-      return;
-    }
-    if (_nuevaCtrl.text != _confirmarCtrl.text) {
-      setState(() => _confirmarError = 'Las contraseñas no coinciden');
-      return;
-    }
+    if (_nuevaCtrl.text.length < 6) { setState(() => _confirmarError = 'Mínimo 6 caracteres'); return; }
+    if (_nuevaCtrl.text != _confirmarCtrl.text) { setState(() => _confirmarError = 'Las contraseñas no coinciden'); return; }
     setState(() { _confirmarError = null; _loading = true; });
     try {
-      const baseUrl = 'http://10.0.2.2:3000/api/v1';
       final res = await http.put(
-        Uri.parse('$baseUrl/users/me/password'),
+        Uri.parse('${ApiConstants.baseUrl}/users/me/password'),
         headers: widget.auth.authHeaders(),
         body: jsonEncode({'password_actual': _actualCtrl.text, 'password_nueva': _nuevaCtrl.text}),
       );
@@ -300,13 +249,11 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
           const SizedBox(height: 12),
           AppTextField(label: 'Confirmar contraseña', hint: '••••••••', controller: _confirmarCtrl, obscure: true, errorText: _confirmarError),
           const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(child: AppButton(label: 'Cancelar', onPressed: () => Navigator.pop(context), variant: AppButtonVariant.secondary)),
-              const SizedBox(width: 10),
-              Expanded(child: AppButton(label: 'Guardar', onPressed: _save, loading: _loading)),
-            ],
-          ),
+          Row(children: [
+            Expanded(child: AppButton(label: 'Cancelar', onPressed: () => Navigator.pop(context), variant: AppButtonVariant.secondary)),
+            const SizedBox(width: 10),
+            Expanded(child: AppButton(label: 'Guardar', onPressed: _save, loading: _loading)),
+          ]),
         ],
       ),
     );

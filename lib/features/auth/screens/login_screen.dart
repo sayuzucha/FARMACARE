@@ -37,6 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
     if (err != null) {
       setState(() { _loading = false; _error = err; });
+    } else {
+      context.go('/patients');
     }
   }
 

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class AppNotification {
   final String id;
@@ -43,7 +44,7 @@ class AppNotification {
 }
 
 class NotificationProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
 
   List<AppNotification> _notifications = [];
   bool _loading = false;
@@ -61,7 +62,8 @@ class NotificationProvider extends ChangeNotifier {
       );
       final res = await http.get(uri, headers: headers);
       if (res.statusCode == 200) {
-        final list = jsonDecode(res.body)['data'] as List;
+        final body = jsonDecode(res.body);
+        final list = (body is List ? body : (body['data'] ?? body['notifications'] ?? [])) as List;
         _notifications = list.map((e) => AppNotification.fromJson(e)).toList();
       }
     } catch (_) {}

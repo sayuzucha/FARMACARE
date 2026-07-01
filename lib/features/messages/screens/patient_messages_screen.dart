@@ -162,7 +162,7 @@ class _MessageBubble extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           if (!isMe) ...[
-            AvatarWidget(name: msg.userName, size: 28, photoUrl: msg.userFotoUrl),
+            AvatarWidget(name: msg.userName, size: 28),
             const SizedBox(width: 8),
           ],
           Flexible(

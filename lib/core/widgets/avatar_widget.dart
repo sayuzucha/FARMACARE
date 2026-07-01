@@ -4,9 +4,8 @@ import '../theme/app_colors.dart';
 class AvatarWidget extends StatelessWidget {
   final String name;
   final double size;
-  final String? photoUrl;
 
-  const AvatarWidget({super.key, required this.name, this.size = 40, this.photoUrl});
+  const AvatarWidget({super.key, required this.name, this.size = 40});
 
   static String getInitials(String name) {
     final words = name.trim().split(RegExp(r'\s+')).where((w) => w.isNotEmpty).toList();
@@ -17,13 +16,6 @@ class AvatarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (photoUrl != null && photoUrl!.isNotEmpty) {
-      return CircleAvatar(
-        radius: size / 2,
-        backgroundImage: NetworkImage(photoUrl!),
-        backgroundColor: AppColors.avatarBg(name),
-      );
-    }
     return Container(
       width: size,
       height: size,

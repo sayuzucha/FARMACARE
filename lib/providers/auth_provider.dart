@@ -2,27 +2,26 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import '../core/constants/api_constants.dart';
 
 class AuthUser {
   final String id;
   final String nombre;
   final String email;
   final String? telefono;
-  final String? fotoUrl;
 
-  const AuthUser({required this.id, required this.nombre, required this.email, this.telefono, this.fotoUrl});
+  const AuthUser({required this.id, required this.nombre, required this.email, this.telefono});
 
   factory AuthUser.fromJson(Map<String, dynamic> j) => AuthUser(
-        id: j['id'],
-        nombre: j['nombre'],
-        email: j['email'],
+        id: j['id']?.toString() ?? '',
+        nombre: j['nombre'] ?? '',
+        email: j['email'] ?? '',
         telefono: j['telefono'],
-        fotoUrl: j['foto_url'],
       );
 }
 
 class AuthProvider extends ChangeNotifier {
-  static const _baseUrl = 'http://10.0.2.2:3000/api/v1';
+  static String get _baseUrl => ApiConstants.baseUrl;
   static const _storage = FlutterSecureStorage();
 
   AuthUser? _user;
