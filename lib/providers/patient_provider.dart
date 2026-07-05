@@ -85,6 +85,27 @@ class Patient {
   }
 }
 
+/// Preview de paciente devuelto por GET /patients/code/:codigo
+class PatientPreview {
+  final String nombre;
+  final List<String> cuidadoresNombres;
+
+  const PatientPreview({required this.nombre, required this.cuidadoresNombres});
+
+  factory PatientPreview.fromJson(Map<String, dynamic> j) {
+    final data = (j['data'] ?? j) as Map<String, dynamic>;
+    final rawList = data['cuidadores'];
+    final List cuidadores = rawList is List ? rawList : [];
+    return PatientPreview(
+      nombre: data['nombre']?.toString() ?? '',
+      cuidadoresNombres: cuidadores
+          .map<String>((c) => (c is Map ? c['nombre']?.toString() : c?.toString()) ?? '')
+          .where((n) => n.isNotEmpty)
+          .toList(),
+    );
+  }
+}
+
 class PatientProvider extends ChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
@@ -173,6 +194,44 @@ class PatientProvider extends ChangeNotifier {
         return null;
       }
       return jsonDecode(res.body)['message'] ?? 'Error al eliminar';
+    } catch (_) {
+      return 'Error de conexión';
+    }
+  }
+
+  /// GET /patients/code/:codigo — preview antes de unirse
+  /// Devuelve PatientPreview o null si el código no existe.
+  /// [error] se rellena con el mensaje del API si falla.
+  Future<(PatientPreview?, String?)> fetchPatientByCode(Map<String, String> headers, String codigo) async {
+    try {
+      final res = await http.get(
+        Uri.parse('$_baseUrl/patients/code/${codigo.trim().toUpperCase()}'),
+        headers: headers,
+      );
+      if (res.statusCode == 200) {
+        return (PatientPreview.fromJson(jsonDecode(res.body)), null);
+      }
+      final msg = jsonDecode(res.body)['message'] ?? 'Código no encontrado';
+      return (null, msg as String?);
+    } catch (_) {
+      return (null, 'Error de conexión');
+    }
+  }
+
+  /// POST /patients/join — unirse como cuidador con un código
+  /// Devuelve null si ok, o el mensaje de error (incluyendo 409 si ya eres cuidador).
+  Future<String?> joinPatient(Map<String, String> headers, String codigo) async {
+    try {
+      final res = await http.post(
+        Uri.parse('$_baseUrl/patients/join'),
+        headers: headers,
+        body: jsonEncode({'codigo': codigo.trim().toUpperCase()}),
+      );
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        await fetchPatients(headers);
+        return null;
+      }
+      return jsonDecode(res.body)['message'] ?? 'Error al unirse al paciente';
     } catch (_) {
       return 'Error de conexión';
     }

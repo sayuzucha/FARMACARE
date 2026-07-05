@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -39,6 +40,28 @@ class AuthProvider extends ChangeNotifier {
     _restoreSession();
   }
 
+  /// Decodifica el payload del JWT (base64url) y extrae {id, nombre, email}.
+  /// Devuelve null si el token no tiene esos campos.
+  AuthUser? _parseTokenUser(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) return null;
+      // base64url → base64 estándar
+      String seg = parts[1].replaceAll('-', '+').replaceAll('_', '/');
+      while (seg.length % 4 != 0) seg += '=';
+      final decoded = jsonDecode(utf8.decode(Uint8List.fromList(base64Decode(seg))));
+      if (decoded['id'] == null || decoded['nombre'] == null) return null;
+      return AuthUser(
+        id: decoded['id'].toString(),
+        nombre: decoded['nombre'],
+        email: decoded['email'] ?? '',
+        telefono: decoded['telefono'],
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _restoreSession() async {
     _loading = true;
     notifyListeners();
@@ -50,7 +73,14 @@ class AuthProvider extends ChangeNotifier {
         return;
       }
       _accessToken = token;
-      await _fetchMe();
+      // Intenta leer datos del usuario directo del payload del JWT
+      final userFromToken = _parseTokenUser(token);
+      if (userFromToken != null) {
+        _user = userFromToken;
+      } else {
+        // Fallback: llamar a /users/me (tokens sin los campos en payload)
+        await _fetchMe();
+      }
     } catch (_) {
       await _clearSession();
     }
@@ -104,7 +134,7 @@ class AuthProvider extends ChangeNotifier {
       );
       final body = jsonDecode(res.body);
       if (res.statusCode == 201) {
-        await _saveSession(body['data']);
+        // No guardamos sesión — el usuario debe iniciar sesión manualmente
         return null;
       }
       _error = body['message'] ?? 'Error al registrarse';
@@ -147,9 +177,13 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _saveSession(Map<String, dynamic> data) async {
     _accessToken = data['accessToken'];
-    _user = AuthUser.fromJson(data['user']);
+    // Preferir datos del payload JWT; si no los trae, usar data['user']
+    final userFromToken = _parseTokenUser(_accessToken!);
+    _user = userFromToken ?? (data['user'] != null ? AuthUser.fromJson(data['user']) : null);
     await _storage.write(key: 'access_token', value: _accessToken);
-    await _storage.write(key: 'refresh_token', value: data['refreshToken']);
+    if (data['refreshToken'] != null) {
+      await _storage.write(key: 'refresh_token', value: data['refreshToken']);
+    }
     notifyListeners();
   }
 

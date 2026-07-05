@@ -41,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (err != null) {
       setState(() { _loading = false; _error = err; });
     } else {
-      context.go('/patients');
+      context.go('/login', extra: {'email': _emailCtrl.text.trim(), 'success': true});
     }
   }
 

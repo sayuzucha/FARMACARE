@@ -7,7 +7,10 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../providers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  /// Datos opcionales pasados desde register o join:
+  /// { 'email': '...', 'success': true }
+  final Map<String, dynamic>? extra;
+  const LoginScreen({super.key, this.extra});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -19,6 +22,17 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _loading = false;
   String? _error;
+  bool _registroExitoso = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final extra = widget.extra;
+    if (extra != null) {
+      if (extra['email'] != null) _emailCtrl.text = extra['email'] as String;
+      if (extra['success'] == true) _registroExitoso = true;
+    }
+  }
 
   @override
   void dispose() {
@@ -54,6 +68,29 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               children: [
                 const SizedBox(height: 56),
+                if (_registroExitoso) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFF6EE7B7), width: 0.8),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.check_circle_outline_rounded, size: 16, color: Color(0xFF059669)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '¡Cuenta creada! Ya puedes iniciar sesión.',
+                            style: TextStyle(fontSize: 13, color: Color(0xFF065F46), fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
                 Container(
                   width: 56,
                   height: 56,

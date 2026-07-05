@@ -103,13 +103,30 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                             ],
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () => context.push('/patients/add'),
-                          child: Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
-                            child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
-                          ),
+                        Row(
+                          children: [
+                            GestureDetector(
+                              onTap: () => context.push('/patients/join'),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundTertiary,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.borderLight, width: 0.8),
+                                ),
+                                child: const Icon(Icons.qr_code_rounded, color: AppColors.textSecondary, size: 22),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => context.push('/patients/add'),
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
+                                child: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -176,7 +193,13 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                       if (i == filtered.length) {
                         return Padding(
                           padding: const EdgeInsets.only(top: 4),
-                          child: _AddPatientCard(onTap: () => context.push('/patients/add')),
+                          child: Column(
+                            children: [
+                              _AddPatientCard(onTap: () => context.push('/patients/add')),
+                              const SizedBox(height: 8),
+                              _JoinPatientCard(onTap: () => context.push('/patients/join')),
+                            ],
+                          ),
                         );
                       }
                       final p = filtered[i];
@@ -275,6 +298,22 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/patients/join'),
+                icon: const Icon(Icons.qr_code_rounded, size: 18),
+                label: const Text('Unirme con código'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.textSecondary,
+                  side: const BorderSide(color: AppColors.border, width: 0.8),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                 ),
               ),
             ),
@@ -903,6 +942,34 @@ class _AddPatientCard extends StatelessWidget {
             Icon(Icons.add_rounded, color: AppColors.textTertiary, size: 18),
             SizedBox(width: 6),
             Text('Agregar nuevo paciente', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JoinPatientCard extends StatelessWidget {
+  final VoidCallback onTap;
+  const _JoinPatientCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.primary.withOpacity(0.25), width: 1),
+          color: AppColors.primarySurface,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.qr_code_rounded, color: AppColors.primary, size: 18),
+            SizedBox(width: 6),
+            Text('Unirme con código', style: TextStyle(fontSize: 13, color: AppColors.primary, fontWeight: FontWeight.w500)),
           ],
         ),
       ),

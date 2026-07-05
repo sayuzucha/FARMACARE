@@ -18,6 +18,7 @@ import '../features/notifications/screens/notifications_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../features/messages/screens/patient_messages_screen.dart';
 import '../features/calendar/screens/patient_calendar_screen.dart';
+import '../features/patients/screens/join_patient_screen.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/login',
@@ -34,11 +35,15 @@ final appRouter = GoRouter(
   },
   refreshListenable: _RouterNotifier(),
   routes: [
-    GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+    GoRoute(
+      path: '/login',
+      builder: (_, state) => LoginScreen(extra: state.extra as Map<String, dynamic>?),
+    ),
     GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
     GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
     GoRoute(path: '/patients', builder: (_, __) => const PatientsListScreen()),
     GoRoute(path: '/patients/add', builder: (_, __) => const AddPatientScreen()),
+    GoRoute(path: '/patients/join', builder: (_, __) => const JoinPatientScreen()),
     GoRoute(
       path: '/patients/:id/home',
       builder: (_, state) => HomeScreen(patientId: state.pathParameters['id']!),
