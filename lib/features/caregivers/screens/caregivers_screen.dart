@@ -71,7 +71,8 @@ class _CaregiversScreenState extends State<CaregiversScreen> with SingleTickerPr
           if (isAdmin)
             IconButton(
               onPressed: () => context.push('/patients/${widget.patientId}/caregivers/invite'),
-              icon: const Icon(Icons.person_add_outlined, color: AppColors.primary),
+              icon: const Icon(Icons.person_add_alt_1_rounded, color: AppColors.primary),
+              tooltip: 'Invitar cuidador',
             ),
         ],
         bottom: TabBar(
@@ -98,45 +99,79 @@ class _CaregiversScreenState extends State<CaregiversScreen> with SingleTickerPr
                   child: ListView(
                     padding: const EdgeInsets.all(16),
                     children: [
-                      _SectionHeader(title: 'Miembros del grupo', count: caregiverProv.caregivers.length),
-                      const SizedBox(height: 8),
-                      Container(
-                        decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderLight, width: 0.5)),
-                        child: Column(
-                          children: caregiverProv.caregivers.asMap().entries.map((e) {
-                            final idx = e.key;
-                            final c = e.value;
-                            final isMe = c.userId == auth.user?.id;
-                            return Column(
+
+                      // Botón de invitar visible para admins
+                      if (isAdmin) ...[
+                        GestureDetector(
+                          onTap: () => context.push('/patients/${widget.patientId}/caregivers/invite'),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                ListTile(
-                                  leading: AvatarWidget(name: c.user.nombre, size: 40),
-                                  title: Row(
-                                    children: [
-                                      Expanded(child: Text(c.user.nombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary))),
-                                      if (isMe)
-                                        Container(
-                                          margin: const EdgeInsets.only(right: 6),
-                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                          decoration: BoxDecoration(color: AppColors.backgroundTertiary, borderRadius: BorderRadius.circular(10)),
-                                          child: const Text('Tú', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
-                                        ),
-                                      PillBadge.fromRol(c.rol),
-                                    ],
-                                  ),
-                                  subtitle: Text(c.user.email, style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
-                                  onTap: () => _showCaregiverSheet(context, c, auth, isAdmin),
-                                ),
-                                if (idx < caregiverProv.caregivers.length - 1)
-                                  const Divider(height: 1, indent: 70, color: AppColors.borderLight),
+                                Icon(Icons.person_add_rounded, color: Colors.white, size: 18),
+                                SizedBox(width: 8),
+                                Text('Invitar cuidador por email', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white)),
                               ],
-                            );
-                          }).toList(),
+                            ),
+                          ),
                         ),
-                      ),
+                        const SizedBox(height: 16),
+                      ],
+
+                      // Lista de miembros o estado vacío
+                      if (caregiverProv.caregivers.isEmpty && !caregiverProv.loading)
+                        _EmptyCaregivers(isAdmin: isAdmin, onInvite: () => context.push('/patients/${widget.patientId}/caregivers/invite'))
+                      else ...[
+                        _SectionHeader(title: 'Miembros del grupo', count: caregiverProv.caregivers.length),
+                        const SizedBox(height: 8),
+                        Container(
+                          decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderLight, width: 0.5)),
+                          child: Column(
+                            children: caregiverProv.caregivers.asMap().entries.map((e) {
+                              final idx = e.key;
+                              final c = e.value;
+                              final isMe = c.userId == auth.user?.id;
+                              return Column(
+                                children: [
+                                  ListTile(
+                                    leading: AvatarWidget(name: c.user.nombre, size: 40),
+                                    title: Row(
+                                      children: [
+                                        Expanded(child: Text(c.user.nombre, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary))),
+                                        if (isMe)
+                                          Container(
+                                            margin: const EdgeInsets.only(right: 6),
+                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            decoration: BoxDecoration(color: AppColors.backgroundTertiary, borderRadius: BorderRadius.circular(10)),
+                                            child: const Text('Tú', style: TextStyle(fontSize: 10, color: AppColors.textSecondary)),
+                                          ),
+                                        PillBadge.fromRol(c.rol),
+                                      ],
+                                    ),
+                                    subtitle: Text(c.user.email, style: const TextStyle(fontSize: 12, color: AppColors.textTertiary)),
+                                    trailing: isAdmin && !isMe
+                                        ? const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textTertiary)
+                                        : null,
+                                    onTap: () => _showCaregiverSheet(context, c, auth, isAdmin),
+                                  ),
+                                  if (idx < caregiverProv.caregivers.length - 1)
+                                    const Divider(height: 1, indent: 70, color: AppColors.borderLight),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+
+                      // Invitaciones pendientes enviadas (solo si admin y hay invites)
                       if (caregiverProv.invites.isNotEmpty) ...[
                         const SizedBox(height: 20),
-                        _SectionHeader(title: 'Invitaciones pendientes', count: caregiverProv.invites.length),
+                        _SectionHeader(title: 'Invitaciones enviadas', count: caregiverProv.invites.length),
                         const SizedBox(height: 8),
                         Container(
                           decoration: BoxDecoration(color: AppColors.background, borderRadius: BorderRadius.circular(12), border: Border.all(color: AppColors.borderLight, width: 0.5)),
@@ -147,7 +182,11 @@ class _CaregiversScreenState extends State<CaregiversScreen> with SingleTickerPr
                               return Column(
                                 children: [
                                   ListTile(
-                                    leading: const CircleAvatar(backgroundColor: AppColors.backgroundSecondary, child: Icon(Icons.mail_outline_rounded, color: AppColors.textTertiary, size: 20)),
+                                    leading: Container(
+                                      width: 40, height: 40,
+                                      decoration: BoxDecoration(color: AppColors.backgroundSecondary, shape: BoxShape.circle),
+                                      child: const Icon(Icons.mail_outline_rounded, color: AppColors.textTertiary, size: 20),
+                                    ),
                                     title: Text(inv.email, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
                                     subtitle: const Text('Pendiente de aceptar', style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
                                     trailing: isAdmin
@@ -452,6 +491,52 @@ class _MessageBubble extends StatelessWidget {
 // ──────────────────────────────────────────────────────────────────────────────
 // EXISTING WIDGETS (unchanged)
 // ──────────────────────────────────────────────────────────────────────────────
+
+class _EmptyCaregivers extends StatelessWidget {
+  final bool isAdmin;
+  final VoidCallback onInvite;
+  const _EmptyCaregivers({required this.isAdmin, required this.onInvite});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Column(
+        children: [
+          Container(
+            width: 72, height: 72,
+            decoration: BoxDecoration(color: AppColors.primarySurface, borderRadius: BorderRadius.circular(20)),
+            child: const Icon(Icons.group_outlined, color: AppColors.primary, size: 36),
+          ),
+          const SizedBox(height: 16),
+          const Text('Sin cuidadores aún', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+          const SizedBox(height: 6),
+          Text(
+            isAdmin
+                ? 'Invita a familiares o enfermeros para coordinar el cuidado juntos.'
+                : 'El administrador del paciente puede agregar cuidadores.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary, height: 1.5),
+          ),
+          if (isAdmin) ...[
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: onInvite,
+              icon: const Icon(Icons.person_add_rounded, size: 18),
+              label: const Text('Invitar por email'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
 
 class _SectionHeader extends StatelessWidget {
   final String title;

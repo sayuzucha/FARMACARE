@@ -213,7 +213,6 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                             context.push('/patients/${p.id}/home');
                           },
                           onMenu: () => _showActions(p),
-                          onAddCaregiver: () => context.push('/patients/${p.id}/caregivers/invite'),
                           onViewCaregivers: () => context.push('/patients/${p.id}/caregivers'),
                         ),
                       );
@@ -330,14 +329,12 @@ class _PatientCard extends StatelessWidget {
   final Patient patient;
   final VoidCallback onTap;
   final VoidCallback onMenu;
-  final VoidCallback onAddCaregiver;
   final VoidCallback onViewCaregivers;
 
   const _PatientCard({
     required this.patient,
     required this.onTap,
     required this.onMenu,
-    required this.onAddCaregiver,
     required this.onViewCaregivers,
   });
 
@@ -431,50 +428,26 @@ class _PatientCard extends StatelessWidget {
             ),
           ),
 
-          // BOTTOM — acciones de cuidadores
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: AppColors.borderLight, width: 0.5)),
-              borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: InkWell(
-                    onTap: onViewCaregivers,
-                    borderRadius: const BorderRadius.only(bottomLeft: Radius.circular(16)),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.group_outlined, size: 15, color: AppColors.textSecondary),
-                          SizedBox(width: 6),
-                          Text('Ver cuidadores', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.textSecondary)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Container(width: 0.5, height: 36, color: AppColors.borderLight),
-                Expanded(
-                  child: InkWell(
-                    onTap: onAddCaregiver,
-                    borderRadius: const BorderRadius.only(bottomRight: Radius.circular(16)),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 11),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(Icons.person_add_outlined, size: 15, color: AppColors.primary),
-                          SizedBox(width: 6),
-                          Text('Agregar cuidador', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+          // BOTTOM — gestión de cuidadores
+          InkWell(
+            onTap: onViewCaregivers,
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+            child: Container(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.borderLight, width: 0.5)),
+                borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.group_outlined, size: 15, color: AppColors.primary),
+                  SizedBox(width: 6),
+                  Text('Gestionar cuidadores', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: AppColors.primary)),
+                  SizedBox(width: 4),
+                  Icon(Icons.chevron_right_rounded, size: 15, color: AppColors.primary),
+                ],
+              ),
             ),
           ),
         ],
