@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -101,7 +102,7 @@ class Medication {
   }
 }
 
-class MedicationProvider extends ChangeNotifier {
+class MedicationProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
   List<Medication> _medications = [];

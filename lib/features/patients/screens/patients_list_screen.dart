@@ -56,6 +56,26 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
     );
   }
 
+  Future<void> _logout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Cerrar sesión', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        content: const Text('¿Deseas cerrar tu sesión?', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar', style: TextStyle(color: AppColors.textSecondary))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Salir', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600))),
+        ],
+      ),
+    );
+    if (confirm == true && mounted) {
+      await context.read<AuthProvider>().logout();
+      if (mounted) context.go('/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final patientProv = context.watch<PatientProvider>();
@@ -106,7 +126,20 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                         Row(
                           children: [
                             GestureDetector(
-                              onTap: () => context.push('/patients/join'),
+                              onTap: _logout,
+                              child: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppColors.backgroundTertiary,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: AppColors.borderLight, width: 0.8),
+                                ),
+                                child: const Icon(Icons.logout_rounded, color: AppColors.textSecondary, size: 22),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/join')),
                               child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
@@ -119,7 +152,7 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                             ),
                             const SizedBox(width: 8),
                             GestureDetector(
-                              onTap: () => context.push('/patients/add'),
+                              onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/add')),
                               child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(12)),
@@ -195,9 +228,9 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                           padding: const EdgeInsets.only(top: 4),
                           child: Column(
                             children: [
-                              _AddPatientCard(onTap: () => context.push('/patients/add')),
+                              _AddPatientCard(onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/add'))),
                               const SizedBox(height: 8),
-                              _JoinPatientCard(onTap: () => context.push('/patients/join')),
+                              _JoinPatientCard(onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/join'))),
                             ],
                           ),
                         );
@@ -210,10 +243,13 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
                           onTap: () {
                             context.read<PatientProvider>().setActivePatient(p);
                             context.read<DoseProvider>().clear();
-                            context.push('/patients/${p.id}/home');
+                            debugPrint('[NAV-7] patient card → home'); WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/${p.id}/home'));
                           },
                           onMenu: () => _showActions(p),
-                          onViewCaregivers: () => context.push('/patients/${p.id}/caregivers'),
+                          onViewCaregivers: () {
+                            context.read<PatientProvider>().setActivePatient(p);
+                            debugPrint('[NAV-8] patient card → caregivers'); WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/${p.id}/caregivers'));
+                          },
                         ),
                       );
                     },
@@ -288,7 +324,7 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => context.push('/patients/add'),
+                onPressed: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/add')),
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Agregar primer paciente'),
                 style: ElevatedButton.styleFrom(
@@ -304,7 +340,7 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => context.push('/patients/join'),
+                onPressed: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/join')),
                 icon: const Icon(Icons.qr_code_rounded, size: 18),
                 label: const Text('Unirme con código'),
                 style: OutlinedButton.styleFrom(
@@ -599,16 +635,18 @@ class _PatientActionsSheetState extends State<_PatientActionsSheet> {
             label: 'Agregar cuidador',
             color: AppColors.primary,
             onTap: () {
+              context.read<PatientProvider>().setActivePatient(widget.patient);
               Navigator.pop(context);
-              context.push('/patients/${widget.patient.id}/caregivers/invite');
+              debugPrint('[NAV-9] action sheet → invite'); WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/${widget.patient.id}/caregivers/invite'));
             },
           ),
           _ActionTile(
             icon: Icons.group_outlined,
             label: 'Ver todos los cuidadores',
             onTap: () {
+              context.read<PatientProvider>().setActivePatient(widget.patient);
               Navigator.pop(context);
-              context.push('/patients/${widget.patient.id}/caregivers');
+              debugPrint('[NAV-10] action sheet → caregivers'); WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/${widget.patient.id}/caregivers'));
             },
           ),
           _ActionTile(icon: Icons.delete_outline_rounded, label: 'Eliminar paciente', color: AppColors.error, onTap: _confirmDelete),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -21,7 +22,7 @@ class AuthUser {
       );
 }
 
-class AuthProvider extends ChangeNotifier {
+class AuthProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
   static const _storage = FlutterSecureStorage();
 

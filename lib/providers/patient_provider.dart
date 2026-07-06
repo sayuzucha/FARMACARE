@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -20,6 +21,7 @@ class Patient {
   final String? notas;
   final String? rol;
   final int totalMedicamentos;
+  final String? codigo;
 
   const Patient({
     required this.id,
@@ -38,6 +40,7 @@ class Patient {
     this.notas,
     this.rol,
     this.totalMedicamentos = 0,
+    this.codigo,
   });
 
   int? get edad {
@@ -67,6 +70,7 @@ class Patient {
         notas: j['notas'],
         rol: j['rol'],
         totalMedicamentos: j['total_medicamentos'] ?? 0,
+        codigo: j['codigo'],
       );
 
   static List<String> _parseStringList(dynamic value) {
@@ -106,7 +110,7 @@ class PatientPreview {
   }
 }
 
-class PatientProvider extends ChangeNotifier {
+class PatientProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
   List<Patient> _patients = [];

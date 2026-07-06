@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -43,7 +44,7 @@ class AppNotification {
       );
 }
 
-class NotificationProvider extends ChangeNotifier {
+class NotificationProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
   List<AppNotification> _notifications = [];

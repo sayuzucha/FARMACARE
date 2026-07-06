@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -85,7 +86,7 @@ class ReceivedInvite {
       );
 }
 
-class CaregiverProvider extends ChangeNotifier {
+class CaregiverProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
   List<Caregiver> _caregivers = [];
@@ -139,6 +140,7 @@ class CaregiverProvider extends ChangeNotifier {
 
   void clearFoundUser() {
     _foundUser = null;
+    _searchingUser = false;
     notifyListeners();
   }
 

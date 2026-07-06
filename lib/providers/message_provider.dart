@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -26,11 +27,26 @@ class PatientMessage {
         userId: j['user_id']?.toString() ?? '',
         userName: j['user_nombre'] ?? j['user']?['nombre'] ?? 'Usuario',
         contenido: j['contenido'] ?? '',
-        createdAt: DateTime.tryParse(j['created_at'] ?? '') ?? DateTime.now(),
+        createdAt: _parseDate(j['created_at'] ?? j['createdAt'] ?? j['timestamp'] ?? j['fecha']),
       );
+
+  static DateTime _parseDate(dynamic v) {
+    if (v == null) return DateTime.now();
+    if (v is int) {
+      // Unix timestamp: si es muy grande es milisegundos, si no es segundos
+      return v > 1e10
+          ? DateTime.fromMillisecondsSinceEpoch(v)
+          : DateTime.fromMillisecondsSinceEpoch(v * 1000);
+    }
+    if (v is String) {
+      final dt = DateTime.tryParse(v);
+      if (dt != null) return dt.toLocal();
+    }
+    return DateTime.now();
+  }
 }
 
-class MessageProvider extends ChangeNotifier {
+class MessageProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
   List<PatientMessage> _messages = [];

@@ -1,3 +1,5 @@
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:device_preview/device_preview.dart';
@@ -14,6 +16,43 @@ import 'providers/appointment_provider.dart';
 import 'router/app_router.dart';
 
 void main() {
+  FlutterError.onError = (FlutterErrorDetails details) {
+    final summary = details.summary.toString();
+    if (summary.contains('Cannot hit test a render box that has never been laid out') ||
+        summary.contains('!_debugDuringDeviceUpdate') ||
+        summary.contains('box.dart:2251') ||
+        summary.contains('RenderBox was not laid out') ||
+        (details.library == 'rendering library' && summary.contains('Assertion failed') && summary.contains('box.dart'))) {
+      debugPrint('[FlutterWeb-known] ${details.summary}');
+      return;
+    }
+    debugPrint('══ FlutterError ══════════════════════════════');
+    debugPrint('Summary: ${details.summary}');
+    debugPrint('Library: ${details.library}');
+    // Print additional context (includes widget where error originated)
+    if (details.context != null) debugPrint('Context: ${details.context}');
+    // Print informationCollector (contains widget tree path)
+    if (details.informationCollector != null) {
+      for (final info in details.informationCollector!()) {
+        debugPrint('Info: $info');
+      }
+    }
+    // Print stack - filter to only app + framework relevant lines
+    int stackLine = 0;
+    for (final f in details.stack.toString().split('\n')) {
+      if (f.trim().isNotEmpty) {
+        debugPrint(f);
+        if (++stackLine >= 20) break; // cap at 20 lines
+      }
+    }
+    debugPrint('══════════════════════════════════════════════');
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('PlatformError: $error');
+    return false;
+  };
+
   runApp(
     DevicePreview(
       enabled: true,

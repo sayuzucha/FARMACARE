@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -38,7 +39,7 @@ class DoctorAppointment {
   DateTime? get fechaDate => DateTime.tryParse(fecha);
 }
 
-class AppointmentProvider extends ChangeNotifier {
+class AppointmentProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
   List<DoctorAppointment> _appointments = [];

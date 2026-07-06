@@ -43,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         leading: IconButton(onPressed: () => context.go('/patients'), icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textPrimary)),
         title: GestureDetector(
-          onTap: () => context.push('/patients/${widget.patientId}/caregivers'),
+          onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/${widget.patientId}/caregivers')),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -154,11 +154,11 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _QuickCard(icon: Icons.chat_bubble_outline_rounded, label: 'Mensajes', color: AppColors.infoSurface, iconColor: AppColors.info, onTap: () => context.push('/patients/$patientId/messages'))),
+        Expanded(child: _QuickCard(icon: Icons.chat_bubble_outline_rounded, label: 'Mensajes', color: AppColors.infoSurface, iconColor: AppColors.info, onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/$patientId/messages')))),
         const SizedBox(width: 10),
-        Expanded(child: _QuickCard(icon: Icons.calendar_month_outlined, label: 'Calendario', color: AppColors.primarySurface, iconColor: AppColors.primary, onTap: () => context.push('/patients/$patientId/calendar'))),
+        Expanded(child: _QuickCard(icon: Icons.calendar_month_outlined, label: 'Calendario', color: AppColors.primarySurface, iconColor: AppColors.primary, onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/$patientId/calendar')))),
         const SizedBox(width: 10),
-        Expanded(child: _QuickCard(icon: Icons.people_outline_rounded, label: 'Cuidadores', color: AppColors.backgroundTertiary, iconColor: AppColors.textSecondary, onTap: () => context.push('/patients/$patientId/caregivers'))),
+        Expanded(child: _QuickCard(icon: Icons.people_outline_rounded, label: 'Cuidadores', color: AppColors.backgroundTertiary, iconColor: AppColors.textSecondary, onTap: () => WidgetsBinding.instance.addPostFrameCallback((_) => context.push('/patients/$patientId/caregivers')))),
       ],
     );
   }

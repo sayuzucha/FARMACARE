@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
 
@@ -69,7 +70,7 @@ class DoseSummary {
   double get porcentaje => total == 0 ? 0 : tomadas / total;
 }
 
-class DoseProvider extends ChangeNotifier {
+class DoseProvider extends SafeChangeNotifier {
   static String get _baseUrl => ApiConstants.baseUrl;
 
   DoseSummary? _today;

@@ -51,25 +51,29 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/patients/:id/medications',
       builder: (_, state) => MedicationsListScreen(patientId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/patients/:id/medications/add',
-      builder: (_, state) => AddMedicationScreen(patientId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/patients/:id/medications/:medId',
-      builder: (_, state) => MedicationDetailScreen(
-        patientId: state.pathParameters['id']!,
-        medId: state.pathParameters['medId']!,
-      ),
+      routes: [
+        GoRoute(
+          path: 'add',
+          builder: (_, state) => AddMedicationScreen(patientId: state.pathParameters['id']!),
+        ),
+        GoRoute(
+          path: ':medId',
+          builder: (_, state) => MedicationDetailScreen(
+            patientId: state.pathParameters['id']!,
+            medId: state.pathParameters['medId']!,
+          ),
+        ),
+      ],
     ),
     GoRoute(
       path: '/patients/:id/caregivers',
       builder: (_, state) => CaregiversScreen(patientId: state.pathParameters['id']!),
-    ),
-    GoRoute(
-      path: '/patients/:id/caregivers/invite',
-      builder: (_, state) => InviteCaregiverScreen(patientId: state.pathParameters['id']!),
+      routes: [
+        GoRoute(
+          path: 'invite',
+          builder: (_, state) => InviteCaregiverScreen(patientId: state.pathParameters['id']!),
+        ),
+      ],
     ),
     GoRoute(
       path: '/patients/:id/messages',
