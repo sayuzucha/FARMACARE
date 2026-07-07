@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:device_preview/device_preview.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'providers/patient_provider.dart';
@@ -53,12 +52,7 @@ void main() {
     return false;
   };
 
-  runApp(
-    DevicePreview(
-      enabled: true,
-      builder: (_) => const FarmacareApp(),
-    ),
-  );
+  runApp(const FarmacareApp());
 }
 
 class FarmacareApp extends StatelessWidget {
@@ -83,8 +77,6 @@ class FarmacareApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         routerConfig: appRouter,
-        locale: DevicePreview.locale(context),
-        builder: DevicePreview.appBuilder,
       ),
     );
   }
