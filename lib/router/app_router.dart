@@ -37,55 +37,55 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(
       path: '/login',
-      builder: (_, state) => LoginScreen(extra: state.extra as Map<String, dynamic>?),
+      pageBuilder: (_, state) => NoTransitionPage(child: LoginScreen(extra: state.extra as Map<String, dynamic>?)),
     ),
-    GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
-    GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
-    GoRoute(path: '/patients', builder: (_, __) => const PatientsListScreen()),
-    GoRoute(path: '/patients/add', builder: (_, __) => const AddPatientScreen()),
-    GoRoute(path: '/patients/join', builder: (_, __) => const JoinPatientScreen()),
+    GoRoute(path: '/register', pageBuilder: (_, __) => const NoTransitionPage(child: RegisterScreen())),
+    GoRoute(path: '/forgot-password', pageBuilder: (_, __) => const NoTransitionPage(child: ForgotPasswordScreen())),
+    GoRoute(path: '/patients', pageBuilder: (_, __) => const NoTransitionPage(child: PatientsListScreen())),
+    GoRoute(path: '/patients/add', pageBuilder: (_, __) => const NoTransitionPage(child: AddPatientScreen())),
+    GoRoute(path: '/patients/join', pageBuilder: (_, __) => const NoTransitionPage(child: JoinPatientScreen())),
     GoRoute(
       path: '/patients/:id/home',
-      builder: (_, state) => HomeScreen(patientId: state.pathParameters['id']!),
+      pageBuilder: (_, state) => NoTransitionPage(child: HomeScreen(patientId: state.pathParameters['id']!)),
     ),
     GoRoute(
       path: '/patients/:id/medications',
-      builder: (_, state) => MedicationsListScreen(patientId: state.pathParameters['id']!),
+      pageBuilder: (_, state) => NoTransitionPage(child: MedicationsListScreen(patientId: state.pathParameters['id']!)),
       routes: [
         GoRoute(
           path: 'add',
-          builder: (_, state) => AddMedicationScreen(patientId: state.pathParameters['id']!),
+          pageBuilder: (_, state) => NoTransitionPage(child: AddMedicationScreen(patientId: state.pathParameters['id']!)),
         ),
         GoRoute(
           path: ':medId',
-          builder: (_, state) => MedicationDetailScreen(
+          pageBuilder: (_, state) => NoTransitionPage(child: MedicationDetailScreen(
             patientId: state.pathParameters['id']!,
             medId: state.pathParameters['medId']!,
-          ),
+          )),
         ),
       ],
     ),
     GoRoute(
       path: '/patients/:id/caregivers',
-      builder: (_, state) => CaregiversScreen(patientId: state.pathParameters['id']!),
+      pageBuilder: (_, state) => NoTransitionPage(child: CaregiversScreen(patientId: state.pathParameters['id']!)),
       routes: [
         GoRoute(
           path: 'invite',
-          builder: (_, state) => InviteCaregiverScreen(patientId: state.pathParameters['id']!),
+          pageBuilder: (_, state) => NoTransitionPage(child: InviteCaregiverScreen(patientId: state.pathParameters['id']!)),
         ),
       ],
     ),
     GoRoute(
       path: '/patients/:id/messages',
-      builder: (_, state) => PatientMessagesScreen(patientId: state.pathParameters['id']!),
+      pageBuilder: (_, state) => NoTransitionPage(child: PatientMessagesScreen(patientId: state.pathParameters['id']!)),
     ),
     GoRoute(
       path: '/patients/:id/calendar',
-      builder: (_, state) => PatientCalendarScreen(patientId: state.pathParameters['id']!),
+      pageBuilder: (_, state) => NoTransitionPage(child: PatientCalendarScreen(patientId: state.pathParameters['id']!)),
     ),
-    GoRoute(path: '/reports', builder: (_, __) => const ReportsScreen()),
-    GoRoute(path: '/notifications', builder: (_, __) => const NotificationsScreen()),
-    GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+    GoRoute(path: '/reports', pageBuilder: (_, __) => const NoTransitionPage(child: ReportsScreen())),
+    GoRoute(path: '/notifications', pageBuilder: (_, __) => const NoTransitionPage(child: NotificationsScreen())),
+    GoRoute(path: '/profile', pageBuilder: (_, __) => const NoTransitionPage(child: ProfileScreen())),
   ],
 );
 

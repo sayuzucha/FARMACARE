@@ -102,6 +102,11 @@ class AuthProvider extends SafeChangeNotifier {
     }
   }
 
+  Future<void> refreshUser() async {
+    await _fetchMe();
+    notifyListeners();
+  }
+
   Future<String?> login({required String email, required String password}) async {
     _error = null;
     try {

@@ -143,14 +143,16 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
       );
       if (!mounted) return;
       if (res.statusCode == 200) {
+        await widget.auth.refreshUser();
+        if (!mounted) return;
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil actualizado'), backgroundColor: AppColors.success));
       } else {
         final msg = jsonDecode(res.body)['message'] ?? 'Error al guardar';
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
       }
-    } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión'), backgroundColor: AppColors.error));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -225,8 +227,8 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         final msg = jsonDecode(res.body)['message'] ?? 'Error al cambiar';
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
       }
-    } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error de conexión'), backgroundColor: AppColors.error));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: AppColors.error));
     }
     if (mounted) setState(() => _loading = false);
   }

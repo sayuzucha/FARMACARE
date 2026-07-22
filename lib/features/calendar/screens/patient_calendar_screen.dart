@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_button.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../providers/appointment_provider.dart';
 import '../../../providers/auth_provider.dart';
@@ -75,7 +76,11 @@ class _PatientCalendarScreenState extends State<PatientCalendarScreen> {
       body: RefreshIndicator(
         color: AppColors.primary,
         onRefresh: _load,
-        child: ListView(
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: ListView(
           children: [
             Container(
               color: AppColors.background,
@@ -143,6 +148,8 @@ class _PatientCalendarScreenState extends State<PatientCalendarScreen> {
                   )),
             ],
           ],
+        ),
+          ),
         ),
       ),
     );
