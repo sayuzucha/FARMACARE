@@ -79,7 +79,7 @@ class _WebSidebar extends StatelessWidget {
     final patientId = patient?.id;
 
     final items = [
-      _SideItem(icon: Icons.people_outline_rounded,      label: 'Pacientes',     route: '/patients'),
+      _SideItem(icon: Icons.people_outline_rounded,      label: 'Pacientes',     route: patientId != null ? '/patients/$patientId/home' : '/patients'),
       _SideItem(icon: Icons.medication_outlined,          label: 'Medicamentos',  route: patientId != null ? '/patients/$patientId/medications' : '/patients'),
       _SideItem(icon: Icons.bar_chart_outlined,           label: 'Reportes',      route: '/reports'),
       _SideItem(icon: Icons.person_outline_rounded,       label: 'Perfil',        route: '/profile'),
