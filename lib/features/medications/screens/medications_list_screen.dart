@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_button.dart';
-import '../../../core/widgets/bottom_nav.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/pill_badge.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/medication_provider.dart';
@@ -37,7 +37,8 @@ class _MedicationsListScreenState extends State<MedicationsListScreen> {
     final medProv = context.watch<MedicationProvider>();
     final meds = medProv.medications;
 
-    return Scaffold(
+    return AppShell(
+      currentIndex: 1,
       backgroundColor: AppColors.backgroundSecondary,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -91,7 +92,6 @@ class _MedicationsListScreenState extends State<MedicationsListScreen> {
           ),
         ],
       ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 1),
     );
   }
 }

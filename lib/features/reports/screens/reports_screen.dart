@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
-import '../../../core/widgets/bottom_nav.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/pill_badge.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/patient_provider.dart';
@@ -75,7 +75,8 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final prov = context.watch<ReportProvider>();
     final report = prov.report;
 
-    return Scaffold(
+    return AppShell(
+      currentIndex: 2,
       backgroundColor: AppColors.backgroundSecondary,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -144,7 +145,6 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 ],
               ),
             ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 2),
     );
   }
 }

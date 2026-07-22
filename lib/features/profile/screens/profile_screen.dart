@@ -7,8 +7,8 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_button.dart';
 import '../../../core/widgets/app_text_field.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/avatar_widget.dart';
-import '../../../core/widgets/bottom_nav.dart';
 import '../../../providers/auth_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -19,7 +19,8 @@ class ProfileScreen extends StatelessWidget {
     final auth = context.watch<AuthProvider>();
     final user = auth.user;
 
-    return Scaffold(
+    return AppShell(
+      currentIndex: 3,
       backgroundColor: AppColors.backgroundSecondary,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -66,7 +67,6 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 24),
         ],
       ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 3),
     );
   }
 

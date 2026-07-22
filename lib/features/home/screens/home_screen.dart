@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/bottom_nav.dart';
+import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/pill_badge.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/patient_provider.dart';
@@ -36,7 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final patient = patientProv.activePatient;
     final today = doseProv.today;
 
-    return Scaffold(
+    return AppShell(
+      currentIndex: 0,
       backgroundColor: AppColors.backgroundSecondary,
       appBar: AppBar(
         backgroundColor: AppColors.background,
@@ -76,7 +77,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ],
               ),
       ),
-      bottomNavigationBar: const AppBottomNav(currentIndex: 0),
     );
   }
 
