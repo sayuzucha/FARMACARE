@@ -30351,7 +30351,7 @@ b1h(a,b){var s,r,q
 for(s=A.cw(a,a.r,A.m(a).c),r=s.$ti.c;s.v();){q=s.d
 if(q==null)q=r.a(q)
 if(b.$1(q))return q}return null},
-d7(){return"http://localhost:3000/api/v1"},
+d7(){return"https://farmacare-api.onrender.com/api/v1"},
 b_m(a){return B.i6},
 aLh(a){v.G.console.error(a)
 A.b0z(a)},
