@@ -107,14 +107,26 @@ class AuthProvider extends SafeChangeNotifier {
     notifyListeners();
   }
 
+  /// POST con timeout de 20s y un reintento automático si falla
+  Future<http.Response> _post(String path, Map<String, dynamic> body, {Map<String, String>? headers}) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final h = {'Content-Type': 'application/json', ...?headers};
+    final b = jsonEncode(body);
+    for (int attempt = 0; attempt < 2; attempt++) {
+      try {
+        return await http.post(uri, headers: h, body: b).timeout(const Duration(seconds: 20));
+      } catch (_) {
+        if (attempt == 1) rethrow;
+        await Future.delayed(const Duration(seconds: 2));
+      }
+    }
+    throw Exception('Sin respuesta del servidor');
+  }
+
   Future<String?> login({required String email, required String password}) async {
     _error = null;
     try {
-      final res = await http.post(
-        Uri.parse('$_baseUrl/auth/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
+      final res = await _post('/auth/login', {'email': email, 'password': password});
       final body = jsonDecode(res.body);
       if (res.statusCode == 200) {
         await _saveSession(body['data']);
@@ -124,7 +136,7 @@ class AuthProvider extends SafeChangeNotifier {
       notifyListeners();
       return _error;
     } catch (_) {
-      _error = 'Error de conexión';
+      _error = 'El servidor tardó en responder. Intenta de nuevo.';
       notifyListeners();
       return _error;
     }
@@ -133,21 +145,16 @@ class AuthProvider extends SafeChangeNotifier {
   Future<String?> register({required String nombre, required String email, required String password}) async {
     _error = null;
     try {
-      final res = await http.post(
-        Uri.parse('$_baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'nombre': nombre, 'email': email, 'password': password}),
-      );
+      final res = await _post('/auth/register', {'nombre': nombre, 'email': email, 'password': password});
       final body = jsonDecode(res.body);
       if (res.statusCode == 201) {
-        // No guardamos sesión — el usuario debe iniciar sesión manualmente
         return null;
       }
       _error = body['message'] ?? 'Error al registrarse';
       notifyListeners();
       return _error;
     } catch (_) {
-      _error = 'Error de conexión';
+      _error = 'El servidor tardó en responder. Intenta de nuevo.';
       notifyListeners();
       return _error;
     }
