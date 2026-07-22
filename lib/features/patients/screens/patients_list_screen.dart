@@ -548,8 +548,11 @@ class _PatientActionsSheetState extends State<_PatientActionsSheet> {
               Navigator.pop(ctx);
               final auth = context.read<AuthProvider>();
               final err = await context.read<PatientProvider>().deletePatient(auth.authHeaders(), widget.patient.id);
-              if (mounted && err != null) {
+              if (!mounted) return;
+              if (err != null) {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err), backgroundColor: AppColors.error));
+              } else {
+                widget.onReload();
               }
             },
             child: const Text('Eliminar', style: TextStyle(color: AppColors.error, fontWeight: FontWeight.w600)),

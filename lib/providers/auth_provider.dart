@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
@@ -107,17 +108,26 @@ class AuthProvider extends SafeChangeNotifier {
     notifyListeners();
   }
 
-  /// POST con timeout de 20s y un reintento automático si falla
+  /// Ping al servidor para despertarlo (se llama al iniciar la app)
+  static Future<void> warmUp() async {
+    try {
+      await http
+          .get(Uri.parse('${ApiConstants.baseUrl.replaceAll('/api/v1', '')}/health'))
+          .timeout(const Duration(seconds: 50));
+    } catch (_) {}
+  }
+
+  /// POST con timeout de 45s y un reintento automático si falla
   Future<http.Response> _post(String path, Map<String, dynamic> body, {Map<String, String>? headers}) async {
     final uri = Uri.parse('$_baseUrl$path');
     final h = {'Content-Type': 'application/json', ...?headers};
     final b = jsonEncode(body);
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        return await http.post(uri, headers: h, body: b).timeout(const Duration(seconds: 20));
+        return await http.post(uri, headers: h, body: b).timeout(const Duration(seconds: 45));
       } catch (_) {
         if (attempt == 1) rethrow;
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(const Duration(seconds: 3));
       }
     }
     throw Exception('Sin respuesta del servidor');

@@ -12,9 +12,12 @@ import 'providers/report_provider.dart';
 import 'providers/notification_provider.dart';
 import 'providers/message_provider.dart';
 import 'providers/appointment_provider.dart';
+import 'providers/auth_provider.dart';
 import 'router/app_router.dart';
 
 void main() {
+  // Ping en background para despertar Render antes de que el usuario haga login
+  AuthProvider.warmUp();
   FlutterError.onError = (FlutterErrorDetails details) {
     final summary = details.summary.toString();
     if (summary.contains('Cannot hit test a render box that has never been laid out') ||
