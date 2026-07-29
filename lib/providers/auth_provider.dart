@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../core/utils/api_error.dart';
 
 class AuthUser {
   final String id;
@@ -142,7 +143,7 @@ class AuthProvider extends SafeChangeNotifier {
         await _saveSession(body['data']);
         return null;
       }
-      _error = body['message'] ?? 'Error al iniciar sesión';
+      _error = extractApiErrorMessage(res.body, 'Error al iniciar sesión');
       notifyListeners();
       return _error;
     } catch (_) {
@@ -156,11 +157,10 @@ class AuthProvider extends SafeChangeNotifier {
     _error = null;
     try {
       final res = await _post('/auth/register', {'nombre': nombre, 'email': email, 'password': password});
-      final body = jsonDecode(res.body);
       if (res.statusCode == 201) {
         return null;
       }
-      _error = body['message'] ?? 'Error al registrarse';
+      _error = extractApiErrorMessage(res.body, 'Error al registrarse');
       notifyListeners();
       return _error;
     } catch (_) {
@@ -178,7 +178,7 @@ class AuthProvider extends SafeChangeNotifier {
         body: jsonEncode({'email': email}),
       );
       if (res.statusCode == 200) return null;
-      return jsonDecode(res.body)['message'] ?? 'Error';
+      return extractApiErrorMessage(res.body);
     } catch (_) {
       return 'Error de conexión';
     }

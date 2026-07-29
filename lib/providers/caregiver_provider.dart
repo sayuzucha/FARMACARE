@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../core/utils/api_error.dart';
 
 class CaregiverUser {
   final String id;
@@ -130,7 +131,7 @@ class CaregiverProvider extends SafeChangeNotifier {
         return null;
       }
       notifyListeners();
-      return jsonDecode(res.body)['message'] ?? 'Esta persona no se ha registrado en la aplicación';
+      return extractApiErrorMessage(res.body, 'Esta persona no se ha registrado en la aplicación');
     } catch (_) {
       _searchingUser = false;
       notifyListeners();
@@ -168,7 +169,7 @@ class CaregiverProvider extends SafeChangeNotifier {
         notifyListeners();
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al aceptar';
+      return extractApiErrorMessage(res.body, 'Error al aceptar');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -186,7 +187,7 @@ class CaregiverProvider extends SafeChangeNotifier {
         notifyListeners();
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al rechazar';
+      return extractApiErrorMessage(res.body, 'Error al rechazar');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -226,7 +227,7 @@ class CaregiverProvider extends SafeChangeNotifier {
         }),
       );
       if (res.statusCode == 201) return null;
-      return jsonDecode(res.body)['message'] ?? 'Error al enviar invitación';
+      return extractApiErrorMessage(res.body, 'Error al enviar invitación');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -243,7 +244,7 @@ class CaregiverProvider extends SafeChangeNotifier {
         notifyListeners();
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al cancelar';
+      return extractApiErrorMessage(res.body, 'Error al cancelar');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -261,7 +262,7 @@ class CaregiverProvider extends SafeChangeNotifier {
         await fetchAll(headers, patientId);
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al cambiar rol';
+      return extractApiErrorMessage(res.body, 'Error al cambiar rol');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -279,7 +280,7 @@ class CaregiverProvider extends SafeChangeNotifier {
         notifyListeners();
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al remover';
+      return extractApiErrorMessage(res.body, 'Error al remover');
     } catch (_) {
       return 'Error de conexión';
     }

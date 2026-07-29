@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../core/utils/api_error.dart';
 
 class DoseSlot {
   final String medicationId;
@@ -92,7 +93,7 @@ class DoseProvider extends SafeChangeNotifier {
       if (res.statusCode == 200) {
         _today = DoseSummary.fromJson(jsonDecode(res.body)['data']);
       } else {
-        _error = jsonDecode(res.body)['message'];
+        _error = extractApiErrorMessage(res.body);
       }
     } catch (_) {
       _error = 'Error de conexión';
@@ -131,7 +132,7 @@ class DoseProvider extends SafeChangeNotifier {
         return null;
       }
       notifyListeners();
-      return jsonDecode(res.body)['message'] ?? 'Error al registrar';
+      return extractApiErrorMessage(res.body, 'Error al registrar');
     } catch (_) {
       _registering = false;
       notifyListeners();

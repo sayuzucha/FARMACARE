@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../core/utils/api_error.dart';
 
 class PatientMessage {
   final String id;
@@ -77,7 +78,7 @@ class MessageProvider extends SafeChangeNotifier {
       if (res.statusCode == 200) {
         _messages = _parseList(jsonDecode(res.body)).map((e) => PatientMessage.fromJson(e)).toList();
       } else {
-        _error = jsonDecode(res.body)['message'] ?? 'Error al cargar mensajes';
+        _error = extractApiErrorMessage(res.body, 'Error al cargar mensajes');
       }
     } catch (e) {
       _error = 'Error: $e';
@@ -101,7 +102,7 @@ class MessageProvider extends SafeChangeNotifier {
         return null;
       }
       notifyListeners();
-      return jsonDecode(res.body)['message'] ?? 'Error al enviar';
+      return extractApiErrorMessage(res.body, 'Error al enviar');
     } catch (_) {
       _sending = false;
       notifyListeners();
@@ -120,7 +121,7 @@ class MessageProvider extends SafeChangeNotifier {
         notifyListeners();
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al eliminar';
+      return extractApiErrorMessage(res.body, 'Error al eliminar');
     } catch (_) {
       return 'Error de conexión';
     }

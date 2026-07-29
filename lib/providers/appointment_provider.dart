@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../core/utils/api_error.dart';
 
 class DoctorAppointment {
   final String id;
@@ -68,7 +69,7 @@ class AppointmentProvider extends SafeChangeNotifier {
       if (res.statusCode == 200) {
         _appointments = _parseList(jsonDecode(res.body)).map((e) => DoctorAppointment.fromJson(e)).toList();
       } else {
-        _error = jsonDecode(res.body)['message'] ?? 'Error al cargar citas';
+        _error = extractApiErrorMessage(res.body, 'Error al cargar citas');
       }
     } catch (_) {
       _error = 'Error de conexión';
@@ -88,7 +89,7 @@ class AppointmentProvider extends SafeChangeNotifier {
         await fetchAppointments(headers, patientId);
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al crear cita';
+      return extractApiErrorMessage(res.body, 'Error al crear cita');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -105,7 +106,7 @@ class AppointmentProvider extends SafeChangeNotifier {
         notifyListeners();
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al eliminar';
+      return extractApiErrorMessage(res.body, 'Error al eliminar');
     } catch (_) {
       return 'Error de conexión';
     }

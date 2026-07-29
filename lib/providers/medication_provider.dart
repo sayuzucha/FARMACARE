@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../core/utils/api_error.dart';
 
 class Medication {
   final String id;
@@ -135,7 +136,7 @@ class MedicationProvider extends SafeChangeNotifier {
       if (res.statusCode == 200) {
         _medications = _parseList(jsonDecode(res.body)).map((e) => Medication.fromJson(e as Map<String, dynamic>)).toList();
       } else {
-        _error = jsonDecode(res.body)['message'] ?? 'Error al cargar medicamentos';
+        _error = extractApiErrorMessage(res.body, 'Error al cargar medicamentos');
       }
     } catch (e) {
       _error = 'Error: $e';
@@ -155,7 +156,7 @@ class MedicationProvider extends SafeChangeNotifier {
         await fetchMedications(headers, patientId);
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al crear medicamento';
+      return extractApiErrorMessage(res.body, 'Error al crear medicamento');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -172,7 +173,7 @@ class MedicationProvider extends SafeChangeNotifier {
         await fetchMedications(headers, patientId);
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al actualizar';
+      return extractApiErrorMessage(res.body, 'Error al actualizar');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -192,7 +193,7 @@ class MedicationProvider extends SafeChangeNotifier {
         await fetchMedications(headers, patientId);
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error';
+      return extractApiErrorMessage(res.body, 'Error');
     } catch (_) {
       return 'Error de conexión';
     }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'safe_change_notifier.dart';
 import 'package:http/http.dart' as http;
 import '../core/constants/api_constants.dart';
+import '../core/utils/api_error.dart';
 
 class Patient {
   final String id;
@@ -140,7 +141,7 @@ class PatientProvider extends SafeChangeNotifier {
         final list = raw is List ? raw : [];
         _patients = list.map((e) => Patient.fromJson(e as Map<String, dynamic>)).toList();
       } else {
-        _error = 'Error ${res.statusCode}: ${jsonDecode(res.body)['message'] ?? res.body}';
+        _error = 'Error ${res.statusCode}: ${extractApiErrorMessage(res.body, res.body)}';
       }
     } catch (e) {
       _error = 'Error: $e';
@@ -197,7 +198,7 @@ class PatientProvider extends SafeChangeNotifier {
         notifyListeners();
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al eliminar';
+      return extractApiErrorMessage(res.body, 'Error al eliminar');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -215,7 +216,7 @@ class PatientProvider extends SafeChangeNotifier {
       if (res.statusCode == 200) {
         return (PatientPreview.fromJson(jsonDecode(res.body)), null);
       }
-      final msg = jsonDecode(res.body)['message'] ?? 'Código no encontrado';
+      final msg = extractApiErrorMessage(res.body, 'Código no encontrado');
       return (null, msg as String?);
     } catch (_) {
       return (null, 'Error de conexión');
@@ -235,7 +236,7 @@ class PatientProvider extends SafeChangeNotifier {
         await fetchPatients(headers);
         return null;
       }
-      return jsonDecode(res.body)['message'] ?? 'Error al unirse al paciente';
+      return extractApiErrorMessage(res.body, 'Error al unirse al paciente');
     } catch (_) {
       return 'Error de conexión';
     }
@@ -249,7 +250,7 @@ class PatientProvider extends SafeChangeNotifier {
         body: jsonEncode(data),
       );
       if (res.statusCode == 201) return null;
-      return jsonDecode(res.body)['message'] ?? 'Error al invitar';
+      return extractApiErrorMessage(res.body, 'Error al invitar');
     } catch (_) {
       return 'Error de conexión';
     }

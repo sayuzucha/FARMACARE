@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
 
 class AppTextField extends StatefulWidget {
@@ -15,6 +16,7 @@ class AppTextField extends StatefulWidget {
   final int maxLines;
   final bool readOnly;
   final VoidCallback? onTap;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AppTextField({
     super.key,
@@ -31,6 +33,7 @@ class AppTextField extends StatefulWidget {
     this.maxLines = 1,
     this.readOnly = false,
     this.onTap,
+    this.inputFormatters,
   });
 
   @override
@@ -52,6 +55,7 @@ class _AppTextFieldState extends State<AppTextField> {
           obscureText: widget.obscure && !_showPassword,
           keyboardType: widget.keyboardType,
           textInputAction: widget.textInputAction,
+          inputFormatters: widget.inputFormatters,
           onChanged: widget.onChanged,
           onEditingComplete: widget.onEditingComplete,
           maxLines: widget.obscure ? 1 : widget.maxLines,

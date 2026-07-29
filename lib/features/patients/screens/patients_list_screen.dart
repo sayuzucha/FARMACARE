@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
@@ -875,7 +876,16 @@ class _EditPatientSheetState extends State<_EditPatientSheet> {
               ),
             ]),
             const SizedBox(height: 14),
-            AppTextField(label: 'Teléfono de emergencia', controller: _telCtrl, prefixIcon: Icons.phone_outlined, keyboardType: TextInputType.phone),
+            AppTextField(
+              label: 'Teléfono de emergencia',
+              controller: _telCtrl,
+              prefixIcon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              inputFormatters: [
+                FilteringTextInputFormatter.digitsOnly,
+                LengthLimitingTextInputFormatter(10),
+              ],
+            ),
             const SizedBox(height: 24),
             AppButton(label: 'Guardar cambios', onPressed: _loading ? null : _save, loading: _loading),
           ],

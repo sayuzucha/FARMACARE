@@ -10,6 +10,7 @@ import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/app_shell.dart';
 import '../../../core/widgets/avatar_widget.dart';
 import '../../../providers/auth_provider.dart';
+import '../../../core/utils/api_error.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -148,7 +149,7 @@ class _EditProfileSheetState extends State<_EditProfileSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Perfil actualizado'), backgroundColor: AppColors.success));
       } else {
-        final msg = jsonDecode(res.body)['message'] ?? 'Error al guardar';
+        final msg = extractApiErrorMessage(res.body, 'Error al guardar');
         if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
       }
     } catch (e) {
@@ -224,7 +225,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Contraseña actualizada'), backgroundColor: AppColors.success));
       } else {
-        final msg = jsonDecode(res.body)['message'] ?? 'Error al cambiar';
+        final msg = extractApiErrorMessage(res.body, 'Error al cambiar');
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: AppColors.error));
       }
     } catch (e) {
