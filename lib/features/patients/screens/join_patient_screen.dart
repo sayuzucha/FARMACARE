@@ -31,7 +31,7 @@ class _JoinPatientScreenState extends State<JoinPatientScreen> {
 
   Future<void> _buscar() async {
     final code = _codeCtrl.text.trim();
-    if (code.length < 4) return;
+    if (code.length != 6) return;
     setState(() {
       _searching = true;
       _preview = null;
@@ -142,9 +142,11 @@ class _JoinPatientScreenState extends State<JoinPatientScreen> {
                   child: TextField(
                     controller: _codeCtrl,
                     textCapitalization: TextCapitalization.characters,
+                    autocorrect: false,
+                    enableSuggestions: false,
                     inputFormatters: [
-                      UpperCaseTextFormatter(),
-                      LengthLimitingTextInputFormatter(8),
+                      HexCodeTextFormatter(),
+                      LengthLimitingTextInputFormatter(6),
                     ],
                     style: const TextStyle(
                       fontSize: 22,
@@ -176,11 +178,14 @@ class _JoinPatientScreenState extends State<JoinPatientScreen> {
                         borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
                       ),
                     ),
-                    onChanged: (_) {
+                    onChanged: (value) {
                       // Limpiar preview si cambia el código
                       if (_preview != null || _previewError != null) {
                         setState(() { _preview = null; _previewError = null; });
                       }
+                      // Buscar automáticamente al completar los 6 caracteres
+                      // (igual que si se pegara el código completo de una vez).
+                      if (value.trim().length == 6) _buscar();
                     },
                     onSubmitted: (_) => _buscar(),
                   ),
@@ -343,9 +348,22 @@ class _JoinPatientScreenState extends State<JoinPatientScreen> {
   }
 }
 
-/// Formateador que convierte texto a mayúsculas automáticamente
-class UpperCaseTextFormatter extends TextInputFormatter {
+/// Formateador para el código de paciente (6 caracteres hexadecimales,
+/// generados en el backend con crypto.randomBytes(3).toString('hex')).
+///
+/// Convierte a mayúsculas Y descarta cualquier carácter que no sea 0-9/A-F.
+/// Esto es clave para que escribir el código a mano funcione igual que
+/// pegarlo: filtra espacios, saltos de línea o caracteres invisibles que
+/// el teclado del celular pueda insertar (autocorrección, predicción de
+/// texto), que antes se mandaban tal cual al backend y hacían fallar la
+/// comparación exacta contra el código real.
+class HexCodeTextFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue new_) =>
-      new_.copyWith(text: new_.text.toUpperCase(), selection: new_.selection);
+  TextEditingValue formatEditUpdate(TextEditingValue old, TextEditingValue new_) {
+    final cleaned = new_.text.toUpperCase().replaceAll(RegExp(r'[^0-9A-F]'), '');
+    return TextEditingValue(
+      text: cleaned,
+      selection: TextSelection.collapsed(offset: cleaned.length),
+    );
+  }
 }
