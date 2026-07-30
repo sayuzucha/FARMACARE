@@ -33,11 +33,19 @@ class AuthProvider extends SafeChangeNotifier {
   bool _loading = true;
   String? _error;
 
+  // ── Autenticación de 2 pasos ──────────────────────────────────────────
+  // Mientras haya un twoFactorToken pendiente, el usuario pasó email+password
+  // pero todavía no tiene sesión: falta que ingrese el código del correo.
+  String? _twoFactorToken;
+  String? _twoFactorEmail;
+
   AuthUser? get user => _user;
   String? get accessToken => _accessToken;
   bool get loading => _loading;
   bool get isAuthenticated => _accessToken != null && _user != null;
   String? get error => _error;
+  bool get needsTwoFactor => _twoFactorToken != null;
+  String? get twoFactorEmail => _twoFactorEmail;
 
   AuthProvider() {
     _restoreSession();
@@ -134,13 +142,27 @@ class AuthProvider extends SafeChangeNotifier {
     throw Exception('Sin respuesta del servidor');
   }
 
+  /// Paso 1 del login (email + password). Si las credenciales son correctas
+  /// pero la cuenta requiere 2FA, NO inicia sesión: deja `needsTwoFactor` en
+  /// true y el llamador debe navegar a la pantalla de verificación y usar
+  /// `verifyTwoFactor`. Devuelve un mensaje de error, o null si todo bien
+  /// (ya sea que abrió sesión directo o quedó pendiente de 2FA).
   Future<String?> login({required String email, required String password}) async {
     _error = null;
+    _twoFactorToken = null;
+    _twoFactorEmail = null;
     try {
       final res = await _post('/auth/login', {'email': email, 'password': password});
       final body = jsonDecode(res.body);
       if (res.statusCode == 200) {
-        await _saveSession(body['data']);
+        final data = body['data'] as Map<String, dynamic>;
+        if (data['requiresTwoFactor'] == true) {
+          _twoFactorToken = data['twoFactorToken'] as String?;
+          _twoFactorEmail = data['email'] as String?;
+          notifyListeners();
+          return null;
+        }
+        await _saveSession(data);
         return null;
       }
       _error = extractApiErrorMessage(res.body, 'Error al iniciar sesión');
@@ -151,6 +173,59 @@ class AuthProvider extends SafeChangeNotifier {
       notifyListeners();
       return _error;
     }
+  }
+
+  /// Paso 2 del login: valida el código de 6 dígitos enviado por correo.
+  /// Si es correcto, abre la sesión real. Devuelve el mensaje de error, o
+  /// null si funcionó.
+  Future<String?> verifyTwoFactor(String code) async {
+    if (_twoFactorToken == null) {
+      return 'La verificación expiró. Inicia sesión de nuevo.';
+    }
+    try {
+      final res = await _post('/auth/login/verify-2fa', {
+        'twoFactorToken': _twoFactorToken,
+        'code': code,
+      });
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        await _saveSession(body['data']);
+        _twoFactorToken = null;
+        _twoFactorEmail = null;
+        return null;
+      }
+      return extractApiErrorMessage(res.body, 'Código incorrecto');
+    } catch (_) {
+      return 'El servidor tardó en responder. Intenta de nuevo.';
+    }
+  }
+
+  /// Pide un código nuevo sin volver a pedir la contraseña.
+  Future<String?> resendTwoFactorCode() async {
+    if (_twoFactorToken == null) {
+      return 'La verificación expiró. Inicia sesión de nuevo.';
+    }
+    try {
+      final res = await _post('/auth/login/resend-2fa', {'twoFactorToken': _twoFactorToken});
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        final data = body['data'] as Map<String, dynamic>;
+        _twoFactorToken = data['twoFactorToken'] as String?;
+        _twoFactorEmail = data['email'] as String?;
+        notifyListeners();
+        return null;
+      }
+      return extractApiErrorMessage(res.body, 'No se pudo reenviar el código');
+    } catch (_) {
+      return 'El servidor tardó en responder. Intenta de nuevo.';
+    }
+  }
+
+  /// Cancela la verificación en curso (ej. el usuario le da "atrás").
+  void cancelTwoFactor() {
+    _twoFactorToken = null;
+    _twoFactorEmail = null;
+    notifyListeners();
   }
 
   Future<String?> register({required String nombre, required String email, required String password}) async {

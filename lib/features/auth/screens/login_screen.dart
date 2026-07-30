@@ -45,13 +45,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _loading = true; _error = null; });
-    final err = await context.read<AuthProvider>().login(
+    final auth = context.read<AuthProvider>();
+    final err = await auth.login(
       email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
     );
     if (!mounted) return;
     if (err != null) {
       setState(() { _loading = false; _error = err; });
+    } else if (auth.needsTwoFactor) {
+      setState(() => _loading = false);
+      context.go('/two-factor');
     } else {
       context.go('/patients');
     }
