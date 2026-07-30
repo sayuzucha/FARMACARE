@@ -7,7 +7,7 @@ class ApiConstants {
   //   docker compose logs -f cloudflared
   // y pégala aquí abajo (con "https://" y sin barra al final) antes de
   // compilar/correr la app.
-  static const String _tunnelHost = 'https://stud-civilian-sims-electronic.trycloudflare.com';
+  static const String _tunnelHost = 'https://beverage-prophet-conservation-hosts.trycloudflare.com';
 
   static String get baseUrl => '$_tunnelHost/api/v1';
 }
