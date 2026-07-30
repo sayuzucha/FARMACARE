@@ -6,6 +6,7 @@ import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/register_screen.dart';
 import '../features/auth/screens/forgot_password_screen.dart';
 import '../features/auth/screens/two_factor_screen.dart';
+import '../features/auth/screens/email_verification_screen.dart';
 import '../features/patients/screens/patients_list_screen.dart';
 import '../features/patients/screens/add_patient_screen.dart';
 import '../features/home/screens/home_screen.dart';
@@ -33,10 +34,13 @@ final appRouter = GoRouter(
         state.matchedLocation.startsWith('/two-factor');
     if (!isAuth && !isAuthRoute) return '/login';
     if (isAuth && isAuthRoute) return '/patients';
-    // Entrar directo a /two-factor sin haber pasado el paso 1 (email+password)
-    // no tiene con qué verificar nada — regresa al login.
+    // Entrar directo a /two-factor o /register/verify sin haber pasado el
+    // paso 1 no tiene con qué verificar nada — regresa a donde corresponde.
     if (state.matchedLocation.startsWith('/two-factor') && !auth.needsTwoFactor) {
       return '/login';
+    }
+    if (state.matchedLocation.startsWith('/register/verify') && !auth.needsRegistrationVerification) {
+      return '/register';
     }
     return null;
   },
@@ -47,6 +51,7 @@ final appRouter = GoRouter(
       pageBuilder: (_, state) => NoTransitionPage(child: LoginScreen(extra: state.extra as Map<String, dynamic>?)),
     ),
     GoRoute(path: '/register', pageBuilder: (_, __) => const NoTransitionPage(child: RegisterScreen())),
+    GoRoute(path: '/register/verify', pageBuilder: (_, __) => const NoTransitionPage(child: EmailVerificationScreen())),
     GoRoute(path: '/forgot-password', pageBuilder: (_, __) => const NoTransitionPage(child: ForgotPasswordScreen())),
     GoRoute(path: '/two-factor', pageBuilder: (_, __) => const NoTransitionPage(child: TwoFactorScreen())),
     GoRoute(path: '/patients', pageBuilder: (_, __) => const NoTransitionPage(child: PatientsListScreen())),

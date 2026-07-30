@@ -39,6 +39,12 @@ class AuthProvider extends SafeChangeNotifier {
   String? _twoFactorToken;
   String? _twoFactorEmail;
 
+  // ── Verificación de correo al registrarse ─────────────────────────────
+  // La cuenta NO se crea hasta que se confirma el código; mientras tanto
+  // solo existe este token pendiente (nada se guarda en el backend todavía).
+  String? _registrationToken;
+  String? _registrationEmail;
+
   AuthUser? get user => _user;
   String? get accessToken => _accessToken;
   bool get loading => _loading;
@@ -46,6 +52,8 @@ class AuthProvider extends SafeChangeNotifier {
   String? get error => _error;
   bool get needsTwoFactor => _twoFactorToken != null;
   String? get twoFactorEmail => _twoFactorEmail;
+  bool get needsRegistrationVerification => _registrationToken != null;
+  String? get registrationEmail => _registrationEmail;
 
   AuthProvider() {
     _restoreSession();
@@ -228,12 +236,24 @@ class AuthProvider extends SafeChangeNotifier {
     notifyListeners();
   }
 
+  /// Paso 1 del registro: valida los datos y manda un código de verificación
+  /// al correo. La cuenta todavía NO existe — hace falta `verifyRegistration`
+  /// para que se cree de verdad.
   Future<String?> register({required String nombre, required String email, required String password}) async {
     _error = null;
+    _registrationToken = null;
+    _registrationEmail = null;
     try {
       final res = await _post('/auth/register', {'nombre': nombre, 'email': email, 'password': password});
-      if (res.statusCode == 201) {
-        return null;
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        final data = body['data'] as Map<String, dynamic>;
+        if (data['requiresVerification'] == true) {
+          _registrationToken = data['verificationToken'] as String?;
+          _registrationEmail = data['email'] as String?;
+          notifyListeners();
+          return null;
+        }
       }
       _error = extractApiErrorMessage(res.body, 'Error al registrarse');
       notifyListeners();
@@ -243,6 +263,58 @@ class AuthProvider extends SafeChangeNotifier {
       notifyListeners();
       return _error;
     }
+  }
+
+  /// Paso 2 del registro: valida el código. Si es correcto, ahí sí se crea
+  /// la cuenta en el backend y se abre la sesión automáticamente.
+  Future<String?> verifyRegistration(String code) async {
+    if (_registrationToken == null) {
+      return 'La verificación expiró. Regístrate de nuevo.';
+    }
+    try {
+      final res = await _post('/auth/register/verify', {
+        'verificationToken': _registrationToken,
+        'code': code,
+      });
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        final body = jsonDecode(res.body);
+        await _saveSession(body['data']);
+        _registrationToken = null;
+        _registrationEmail = null;
+        return null;
+      }
+      return extractApiErrorMessage(res.body, 'Código incorrecto');
+    } catch (_) {
+      return 'El servidor tardó en responder. Intenta de nuevo.';
+    }
+  }
+
+  /// Pide un código de verificación de registro nuevo.
+  Future<String?> resendRegistrationCode() async {
+    if (_registrationToken == null) {
+      return 'La verificación expiró. Regístrate de nuevo.';
+    }
+    try {
+      final res = await _post('/auth/register/resend', {'verificationToken': _registrationToken});
+      if (res.statusCode == 200) {
+        final body = jsonDecode(res.body);
+        final data = body['data'] as Map<String, dynamic>;
+        _registrationToken = data['verificationToken'] as String?;
+        _registrationEmail = data['email'] as String?;
+        notifyListeners();
+        return null;
+      }
+      return extractApiErrorMessage(res.body, 'No se pudo reenviar el código');
+    } catch (_) {
+      return 'El servidor tardó en responder. Intenta de nuevo.';
+    }
+  }
+
+  /// Cancela el registro pendiente (ej. el usuario le da "atrás").
+  void cancelRegistration() {
+    _registrationToken = null;
+    _registrationEmail = null;
+    notifyListeners();
   }
 
   Future<String?> forgotPassword(String email) async {

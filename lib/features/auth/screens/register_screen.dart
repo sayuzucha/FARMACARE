@@ -33,16 +33,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() { _loading = true; _error = null; });
-    final err = await context.read<AuthProvider>().register(
+    final auth = context.read<AuthProvider>();
+    final err = await auth.register(
       nombre: _nombreCtrl.text.trim(),
       email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
     );
     if (!mounted) return;
+    setState(() => _loading = false);
     if (err != null) {
-      setState(() { _loading = false; _error = err; });
-    } else {
-      context.go('/login', extra: {'email': _emailCtrl.text.trim(), 'success': true});
+      setState(() => _error = err);
+    } else if (auth.needsRegistrationVerification) {
+      context.go('/register/verify');
     }
   }
 
